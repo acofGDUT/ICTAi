@@ -1,0 +1,28 @@
+server:
+  port: 8081
+spring:
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+  ai:
+    openai:
+      api-key: "sk-U9JPSP23TsGQd1ACm12mWMSzOWCy3zBbuyVE251lrzivthDm"
+      base-url: "https://api.bianxie.ai"
+      chat:
+        options:
+          model: "gpt-4o-mini"  # 使用OpenAI的GPT-4o模型
+      embedding:
+        options:
+          model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
+    vectorstore:
+      milvus:
+        client:
+          host: "localhost"
+          port: 19530
+        databaseName: "default"
+        collectionName: "vector_store"
+        embeddingDimension: 1536
+        indexType: IVF_FLAT
+        metricType: COSINE
+        initialize-schema: true
