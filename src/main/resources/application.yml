@@ -1,6 +1,13 @@
 server:
+  tomcat:
+    connection-timeout: 120000 # 单位：毫秒
+    keep-alive-timeout: 120000 # 保持连接的超时时间
+    max-swallow-size: -1 # 禁用请求体吞咽功能
   port: 8081
 spring:
+  mvc:
+    async:
+      request-timeout: 120000 # 设置异步请求的超时时间（毫秒）
   servlet:
     multipart:
       max-file-size: 200MB
@@ -9,9 +16,13 @@ spring:
     openai:
       api-key: "sk-U9JPSP23TsGQd1ACm12mWMSzOWCy3zBbuyVE251lrzivthDm"
       base-url: "https://api.bianxie.ai"
+#      api-key: "sk-temp"
+#      base-url: "http://localhost:8000"
       chat:
         options:
-          model: "gpt-4o-mini"  # 使用OpenAI的GPT-4o模型
+          model: "gpt-4o"  # 使用OpenAI的GPT-4o模型
+          temperature: 0.7
+#          model: "Qwen2.5-7B-Instruct"
       embedding:
         options:
           model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型

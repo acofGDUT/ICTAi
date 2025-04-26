@@ -13,12 +13,15 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(
-        origins = {"http://localhost:80", "http://localhost"}, // 添加所有可能的来源
+        origins = {"http://localhost:80", "http://localhost"}, // 处理跨域请求
         allowedHeaders = "*",
         methods = {RequestMethod.GET, RequestMethod.POST},
         allowCredentials = "true"
@@ -45,8 +48,6 @@ public class DialogController {
                 .prompt(new Prompt(
                         "你现在的身份是桥梁检测助手，可以参考向量数据库中的相关标准和常识回答用户提问",
                         OpenAiChatOptions.builder()
-                                .model("gpt-4o-mini")
-                                .temperature(0.7)
                                 .build()
                 ))
                 .user(message)
