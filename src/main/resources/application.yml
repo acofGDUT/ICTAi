@@ -29,7 +29,7 @@ spring:
     vectorstore:
       milvus:
         client:
-          host: "localhost"
+          host: "60.205.13.156"
           port: 19530
         databaseName: "default"
         collectionName: "vector_store"
