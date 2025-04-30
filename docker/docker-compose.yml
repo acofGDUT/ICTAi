@@ -1,71 +1,57 @@
-#  该docker 已经弃用 ， 改为使用 主项目的 docker
-#services:
-#  etcd:
-#    container_name: milvus-etcd
-#    image: quay.io/coreos/etcd:v3.5.5
-#    environment:
-#      - ETCD_AUTO_COMPACTION_MODE=revision
-#      - ETCD_AUTO_COMPACTION_RETENTION=1000
-#      - ETCD_QUOTA_BACKEND_BYTES=4294967296
-#      - ETCD_SNAPSHOT_COUNT=50000
-#    volumes:
-#      - ./data/etcd:/etcd
-#    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
-#    healthcheck:
-#      test: ["CMD", "etcdctl", "endpoint", "health"]
-#      interval: 30s
-#      timeout: 20s
-#      retries: 3
-#
-#  milvus-minio:
-#    container_name: milvus-minio
-#    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
-#    environment:
-#      MINIO_ACCESS_KEY: minioadmin
-#      MINIO_SECRET_KEY: minioadmin
-#    volumes:
-#      - ./data/minio:/minio_data
-#    command: minio server /minio_data
+version: '2'
+services:
+#  mysql:
+#    container_name: bi_mysql
+#    extends:
+#      file: mysql.yml
+#      service: mysql
+#    networks:
+#      - bi-net
+  minio:
+    container_name: bi_minio
+    extends:
+      file: minio.yml
+      service: minio
+    networks:
+      - bi-net
+  etcd:
+    container_name: milvus-etcd
+    extends:
+      file: milvus.yml
+      service: etcd
+    networks:
+      - bi-net
+  milvus-standalone:
+    container_name: milvus-standalone
+    extends:
+      file: milvus.yml
+      service: milvus-standalone
+    networks:
+      - bi-net
+#  bi_building_inspector:
+#    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector:1.0
+#    container_name: bi_building_inspector
 #    ports:
-#      - "9000:9000"
-#    healthcheck:
-#      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-#      interval: 30s
-#      timeout: 20s
-#      retries: 3
-#
-#  standalone:
-#    container_name: milvus-standalone
-#    image: milvusdb/milvus:v2.3.4
-#    command: ["milvus", "run", "standalone"]
-#    environment:
-#      ETCD_ENDPOINTS: etcd:2379
-#      MINIO_ADDRESS: milvus-minio:9000
-#    volumes:
-#      - ./data/milvus:/var/lib/milvus
-#    ports:
-#      - "19530:19530"
-#      - "9091:9091"
+#      - "8090:80"
+#    restart: always
+#    networks:
+#      - bi-net
 #    depends_on:
-#      - "etcd"
-#      - "milvus-minio"
-#    healthcheck:
-#      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-#      interval: 30s
-#      timeout: 20s
-#      retries: 3
-#
-##  # Milvus管理界面（可选）- 端口已修改为9800
-##  attu:
-##    container_name: milvus-attu
-##    image: zilliz/attu:v2.3.2
-##    environment:
-##      MILVUS_URL: standalone:19530
-##    ports:
-##      - "9800:3000"  # 修改为9800端口，避免与后端应用的8080端口冲突
-##    depends_on:
-##      - standalone
-#
-#networks:
-#  default:
-#    name: milvus-network
+#      - mysql
+#      - minio
+#      - etcd
+#      - milvus-standalone
+  bi_building_inspector_ai:
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector-ai:1.0
+    container_name: bi_building_inspector_ai
+    ports:
+      - "8081:8081"
+    restart: always
+    networks:
+      - bi-net
+    depends_on:
+      - minio
+      - etcd
+      - milvus-standalone
+networks:
+  bi-net:
