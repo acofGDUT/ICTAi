@@ -1,7 +1,7 @@
 # version 可能会引起报错，暂时去掉
 services:
   minio:
-    image: minio/minio
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/minio:latest
     volumes:
       - ./data/minio/data:/data
       - ./data/minio/config:/root/.minio
