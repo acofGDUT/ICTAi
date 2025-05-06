@@ -20,12 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(
-        origins = {"http://localhost:80", "http://localhost"}, // 处理跨域请求
-        allowedHeaders = "*",
-        methods = {RequestMethod.GET, RequestMethod.POST},
-        allowCredentials = "true"
-)
 @RequestMapping("/api")
 public class DialogController {
     @Autowired
