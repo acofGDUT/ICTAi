@@ -6,6 +6,13 @@ server:
   port: 8081
 spring:
   mvc:
+    cors:
+      cors-configurations:
+        "/**":
+          allowed-origins: "http://60.205.13.156:8090"
+          allowed-methods: "GET, POST"
+          allowed-headers: "*"
+          allow-credentials: "true"
     async:
       request-timeout: 120000 # 设置异步请求的超时时间（毫秒）
   servlet:
@@ -30,6 +37,7 @@ spring:
       milvus:
         client:
           host: "47.94.205.90"
+#          host: "localhost"  #本地测试用
           port: 19530
         databaseName: "default"
         collectionName: "vector_store"

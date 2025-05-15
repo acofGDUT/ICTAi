@@ -1,6 +1,7 @@
 # 使用openjdk的Java 17基础镜像
-FROM openjdk:17-jdk
-
+#FROM openjdk:17-jdk
+# 解决镜像 拉取的网络问题
+FROM circleci/openjdk:17-jdk-buster-node-browsers-legacy
 # 设置工作目录
 WORKDIR /app
 
