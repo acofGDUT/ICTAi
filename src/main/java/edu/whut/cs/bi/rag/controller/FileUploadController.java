@@ -3,12 +3,18 @@ package edu.whut.cs.bi.rag.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.poi.xwpf.usermodel.*;
-import org.junit.Test;
+import com.tencent.tcvectordb.client.VectorDBClient;
+import com.tencent.tcvectordb.model.AIDatabase;
+import com.tencent.tcvectordb.model.CollectionView;
+import com.tencent.tcvectordb.model.param.collectionView.FileType;
+import com.tencent.tcvectordb.model.param.collectionView.LoadAndSplitTextParam;
+import com.tencent.tcvectordb.model.param.collectionView.ParsingProcessParam;
+import com.tencent.tcvectordb.model.param.collectionView.SplitterPreprocessParams;
+import com.tencent.tcvectordb.model.param.enums.ParsingTypeEnum;
+import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
@@ -23,9 +29,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -53,6 +56,10 @@ public class FileUploadController {
     private ChatModel chatModel;
     @Autowired
     private VectorStore vectorStore;
+
+    // 在线 向量数据库 测试
+    @Autowired
+    private VectorDBClientOnlineService OnlineDBclient;
 
     private static final int CHUNK_SIZE = 1000; // 每块的大小（可以根据实际情况调整）
     // 将 传入的标准 文档 分片， 存入向量数据库。
@@ -91,6 +98,8 @@ public class FileUploadController {
             return "文件处理失败：" + e.getMessage();
         }
     }
+
+
 
 
     // 当前可用的方法 ： 流式返回，解决了超时问题
@@ -364,6 +373,38 @@ public class FileUploadController {
 
 
 
+
+
+    // 腾讯云 在线数据库 ， 暂时弃用
+    @PostMapping("/uploadToOnlineVector")
+    public String  uploadFileToOnlineVector(@RequestParam("file") MultipartFile file) {
+        try {
+            VectorDBClient client = OnlineDBclient.getDBClient();
+            // 初始化,第一次时需创建
+            OnlineDBclient.initDBandCollection(client);
+            //拿到 数据库和集合
+            AIDatabase db = client.aiDatabase(OnlineDBclient.dbName);
+            CollectionView collection = db.describeCollectionView(OnlineDBclient.collectionName);
+            //设置 参数
+            LoadAndSplitTextParam param = LoadAndSplitTextParam.newBuilder()
+                    .withFileInputStream(file.getInputStream())
+                    .withFileType(FileType.PDF)
+                    .withDocumentSetName(file.getName())
+                    .withInputStreamDataSize(file.getSize())
+                    .withSplitterProcess(SplitterPreprocessParams.newBuilder()
+                            .withAppendKeywordsToChunkEnum(true)
+                            .withAppendTitleToChunkEnum(false)
+                            .Build())
+                    .withParsingProcess(ParsingProcessParam.newBuilder().withParsingType(ParsingTypeEnum.VisionModel).build())
+                    .Build();
+
+            // 调用 loadAndSplitText() 上传文件
+            collection.loadAndSplitText(param);
+            return "文件成功上传到在线向量数据库";
+        } catch (Exception e){
+            return "上传失败" + e.getMessage();
+        }
+    }
 
 
 

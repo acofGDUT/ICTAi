@@ -5,6 +5,10 @@ server:
     max-swallow-size: -1 # 禁用请求体吞咽功能
   port: 8081
 spring:
+  datasource:
+    url: jdbc:postgresql://pgvector-bi-master.rwlb.rds.aliyuncs.com:5432/pgvector_bi
+    username: admin_0
+    password: admin_123
   mvc:
     cors:
       cors-configurations:
@@ -33,15 +37,21 @@ spring:
       embedding:
         options:
           model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
-    vectorstore:
-      milvus:
-        client:
-          host: "47.94.205.90"
-#          host: "localhost"  #本地测试用
-          port: 19530
-        databaseName: "default"
-        collectionName: "vector_store"
-        embeddingDimension: 1536
-        indexType: IVF_FLAT
-        metricType: COSINE
-        initialize-schema: true
+      vectorstore:
+        pgvector:
+          index-type: HNSW
+          distance-type: COSINE_DISTANCE
+          dimensions: 1536
+          max-document-batch-size: 10000 # Optional: Maximum number of documents per batch
+#    vectorstore:
+#      milvus:
+#        client:
+#          host: "47.94.205.90"
+##          host: "localhost"  #本地测试用
+#          port: 19530
+#        databaseName: "default"
+#        collectionName: "vector_store"
+#        embeddingDimension: 1536
+#        indexType: IVF_FLAT
+#        metricType: COSINE
+#        initialize-schema: true
