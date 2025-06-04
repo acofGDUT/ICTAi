@@ -1,0 +1,237 @@
+{
+	"info": {
+		"_postman_id": "38ada3b4-d6d6-4a56-9daf-f4068ba890c5",
+		"name": "Bi-Ai-Api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2988524",
+		"_collection_link": "https://btripfront.postman.co/workspace/My-Workspace~7b28553b-6bbf-432f-8422-550dfce0ca6a/collection/2988524-38ada3b4-d6d6-4a56-9daf-f4068ba890c5?action=share&source=collection_link&creator=2988524"
+	},
+	"item": [
+		{
+			"name": "对话",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/dialog?message=你好&userId=1",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"dialog"
+					],
+					"query": [
+						{
+							"key": "message",
+							"value": "你好"
+						},
+						{
+							"key": "userId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "传入向量数据库",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/qixin/Google 云端硬盘/projects/湖北交投智能检测/分析设计/桥梁检测依据知识库文档/《公路缆索结构体系桥梁养护技术规范》（JTGT 5122-2021）.pdf"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/upload",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "word转Json",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/qixin/Google 云端硬盘/projects/湖北交投智能检测/分析设计/基本状况卡/单个桥梁卡片/桥梁基本状况卡片2021-许家棚大桥-上行.docx"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/word2Json",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"word2Json"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "病害成因分析",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "template",
+							"value": "斜拉桥",
+							"type": "text"
+						},
+						{
+							"key": "parentObject",
+							"value": "上部结构",
+							"type": "text"
+						},
+						{
+							"key": "object",
+							"value": "拱上结构",
+							"type": "text"
+						},
+						{
+							"key": "type",
+							"value": "破损露筋",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "立柱大桩号面破损露筋1处",
+							"type": "text"
+						},
+						{
+							"key": "position",
+							"value": "距底面10cm，距外侧面0cm",
+							"type": "text"
+						},
+						{
+							"key": "area",
+							"value": "20×15cm²",
+							"type": "text"
+						},
+						{
+							"key": "level",
+							"value": "2",
+							"type": "text"
+						},
+						{
+							"key": "componentCode",
+							"value": "R-01-2-3",
+							"type": "text"
+						},
+						{
+							"key": "componentName",
+							"value": "R-01-2-3#立柱",
+							"type": "text"
+						},
+						{
+							"key": "trend",
+							"value": "新增",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/disease/cause",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"disease",
+						"cause"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "47.94.205.90",
+			"type": "string"
+		},
+		{
+			"key": "port",
+			"value": "8081",
+			"type": "string"
+		}
+	]
+}
