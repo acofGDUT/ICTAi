@@ -1,5 +1,6 @@
 package edu.whut.cs.bi.rag.controller;
 
+import com.google.gson.JsonObject;
 import com.tencent.tcvectordb.client.VectorDBClient;
 import com.tencent.tcvectordb.model.AIDatabase;
 import com.tencent.tcvectordb.model.CollectionView;
@@ -21,6 +22,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
@@ -30,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/api")
 public class DialogController {
     @Autowired
@@ -45,14 +47,16 @@ public class DialogController {
     @Autowired
     private VectorDBClientOnlineService  OnlineDBclient;
 
+    @ResponseBody
+    @CrossOrigin(origins = "*")
     @GetMapping("/dialog")
     public String dialog(@RequestParam String message, @RequestParam String userId) {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
 
         ChatClient.Builder builder = ChatClient.builder(chatModel)
-                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore, searchRequest));
+                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
-        return userSessionService.getOrCreateChatClient(userId, builder)
+        String content = userSessionService.getOrCreateChatClient(userId, builder)
                 .prompt(new Prompt(
                         "这是用户的提问："+message,
                         OpenAiChatOptions.builder()
@@ -60,11 +64,13 @@ public class DialogController {
                 )).system("你一个是全面的助手，主要着眼于桥梁检测领域，请参考行业知识和向量数据库知识回答用户。")
                 .call()
                 .content();
+        return content;
     }
 
 
 
     // 腾讯云 在线数据库 ， 暂时弃用
+    @ResponseBody
     @GetMapping("/dialogByOnlineVector")
     public String dialogByOnlineVector(@RequestParam String message, @RequestParam String userId) {
 
@@ -103,7 +109,8 @@ public class DialogController {
                 .content();
     }
 
-
+    @ResponseBody
+    @CrossOrigin(origins = "*")
     @GetMapping("/disease/cause")
     public Flux<String> getDiseaseCause(@RequestParam Map<String,String> params) {
          String template = params.get("template");

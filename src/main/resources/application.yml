@@ -10,13 +10,6 @@ spring:
     username: admin_0
     password: admin_123
   mvc:
-    cors:
-      cors-configurations:
-        "/**":
-          allowed-origins: "http://60.205.13.156:8090"
-          allowed-methods: "GET, POST"
-          allowed-headers: "*"
-          allow-credentials: "true"
     async:
       request-timeout: 120000 # 设置异步请求的超时时间（毫秒）
   servlet:
