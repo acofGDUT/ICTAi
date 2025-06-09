@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping("/api")
@@ -50,21 +52,57 @@ public class DialogController {
     @ResponseBody
     @CrossOrigin(origins = "*")
     @GetMapping("/dialog")
-    public String dialog(@RequestParam String message, @RequestParam String userId) {
+    public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
 
-        ChatClient.Builder builder = ChatClient.builder(chatModel)
+        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是全面的助手，主要着眼于桥梁检测领域。！！！切记，无论回答如何，你的回答一定需要包含检索来源这一项，！！！尽可能使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。")
                 .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
-        String content = userSessionService.getOrCreateChatClient(userId, builder)
-                .prompt(new Prompt(
-                        "这是用户的提问："+message,
+        String content_original = userSessionService.getOrCreateChatClient(userId, builder)
+                .prompt(new Prompt("这是一个示例回答，请将主体内容和检索依据分开。！！切记，无论问题如何，一定需要包含检索来源，并使用‘检索来源为’作为检索来源内容的开始，方便后续的内容处理：" +
+                        "您好，桥梁检测的主要内容包括：\n" +
+                        "\n" +
+                        "1. **混凝土电阻率**：混凝土的电阻率可以反映其导电性能，间接判断钢筋的可能锈蚀速率。电阻率越小，混凝土的导电性越强，钢筋锈蚀发展速度越快。\n" +
+                        "\n" +
+                        "2. **检查方法和性能指标**：在进行桥梁检查前，需依据设计文件与设计单位、生产厂商明确检查方法和评定标准，并形成正式文件，以作为后续检查和评价的依据。\n" +
+                        "\n" +
+                        "3. **特殊检查的资料准备**：进行特殊检查时，需要准备包括设计文件、计算程序、方法及计算结果等资料。如果原始资料不全或存疑，则需现场测绘构造尺寸，测试构件材料组成及性能，并勘查水文地质情况。\n" +
+                        "\n" +
+                        "4. **病害及时修复**：在定期检查中发现桥梁病害时，应及时进行修复和养护，以确保桥梁的安全性和使用寿命。\n" +
+                        "\n" +
+                        "检索来源为《公路桥涵养护规范（JTG 5120－2021）》等。"
+                        ,
                         OpenAiChatOptions.builder()
                                 .build()
-                )).system("你一个是全面的助手，主要着眼于桥梁检测领域，请参考行业知识和向量数据库知识回答用户。")
+                )).user(message)
                 .call()
                 .content();
-        return content;
+
+        Map<String, String> result = new HashMap<>();
+        String content = new String();
+        String reference = new String();
+
+
+        // 使用正则表达式查找分割点
+        Pattern pattern = Pattern.compile("(.*)(检索来源为.*)", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(content_original);
+
+        if (matcher.find()) {
+             content = matcher.group(1).trim();
+             reference = matcher.group(2).trim();
+            System.out.println("正文：\n" + content);
+            System.out.println("\n检索来源\n" + reference);
+        }
+        if(reference != null && !reference.isEmpty()){
+            result.put("content", content);
+            result.put("reference", reference);
+        }else{
+            result.put("content", content_original);
+            result.put("reference", "检索来源为：我的知识库。");
+        }
+
+
+        return result;
     }
 
 
@@ -100,7 +138,7 @@ public class DialogController {
 
         return userSessionService.getOrCreateChatClient(userId, builder)
                 .prompt(new Prompt(
-                        "你现在的身份是桥梁检测助手，可以参考向量数据库中的相关标准和常识回答用户提问。"+ragPrompt,
+                        "你现在的身份是桥梁检测助手，可以参考向量数据库中的相关标准和常识回答用户提问，并给出检索来源。"+ragPrompt,
                         OpenAiChatOptions.builder()
                                 .build()
                 ))
