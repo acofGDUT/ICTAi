@@ -55,7 +55,10 @@ public class DialogController {
     public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
 
-        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是全面的助手，主要着眼于桥梁检测领域。！！！切记，无论回答如何，你的回答一定需要包含检索来源这一项，！！！尽可能使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。")
+        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是智能助手，主要着眼于桥梁检测领域。" +
+                        "！！！切记，无论问题如何，你的任何回答一定需要包含检索来源这一项，！！！尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。" +
+                        "你可以使用用的工具包括：获取桥梁属性树。" +
+                        "使用工具前，请获取桥梁的名称")
                 .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
         String content_original = userSessionService.getOrCreateChatClient(userId, builder)
@@ -75,6 +78,7 @@ public class DialogController {
                         OpenAiChatOptions.builder()
                                 .build()
                 )).user(message)
+                .functions("getBiProperty")
                 .call()
                 .content();
 
@@ -149,7 +153,7 @@ public class DialogController {
 
     @ResponseBody
     @CrossOrigin(origins = "*")
-    @GetMapping("/disease/cause")
+    @PostMapping("/disease/cause")
     public Flux<String> getDiseaseCause(@RequestParam Map<String,String> params) {
          String template = params.get("template");
          String parentObject = params.get("parentObjedct");
