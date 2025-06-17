@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api")
+@RequestMapping("/api-ai")
 public class FileUploadController {
     @Autowired
     private ChatModel chatModel;

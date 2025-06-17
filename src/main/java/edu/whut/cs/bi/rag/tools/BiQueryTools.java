@@ -1,0 +1,87 @@
+package edu.whut.cs.bi.rag.tools;
+
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Description;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.function.Function;
+
+@Configuration
+public class BiQueryTools {
+    @Value("${bi-location}")
+    private String base_Url;
+    @Resource
+    private RestTemplate restTemplate;
+
+
+    public record BiPropertyRequest(String BuildingName,String token){};
+
+    public record BiProjectRequest(String UserId,String token){
+    }
+    public record  BiTaskRequest(String ProjectId,String token){}
+
+    @Bean
+    @Description("通过桥梁名称和token拿到桥梁属性树")
+    public Function<BiPropertyRequest, String> getBiProperty() {
+            return request->{
+                String url = base_Url+"/toolCallingApi/building/"+request.BuildingName+"/property";
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Authorization",request.token);
+                headers.set("Accept", "*/*");
+                headers.set("Accept-Encoding", "gzip, deflate, br");
+                headers.set("Connection", "keep-alive");
+                HttpEntity entity = new HttpEntity<>(headers);
+                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+                String res = response.getBody();
+                System.out.println("res:"+res);
+                return "查询的属性树 json:"+res;
+            };
+    }
+
+
+    @Bean
+    @Description("通过userId和token拿到该人员参与的项目(Project)信息")
+    public Function<BiProjectRequest, String> getBiPropject() {
+        return request->{
+            String url = base_Url+"/toolCallingApi/project/"+request.UserId;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization",request.token);
+            headers.set("Accept", "*/*");
+            headers.set("Accept-Encoding", "gzip, deflate, br");
+            headers.set("Connection", "keep-alive");
+            HttpEntity entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            String res = response.getBody();
+            System.out.println("res:"+res);
+            return "查询的用户项目信息:"+res;
+        };
+    }
+
+    @Bean
+    @Description("通过工具或对话拿到的projectId(项目Id)和token拿到任务(task)信息")
+    public Function<BiTaskRequest, String> getBiTask() {
+        return request->{
+            String url = base_Url+"/toolCallingApi/project/"+request.ProjectId+"/task";
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization",request.token);
+            headers.set("Accept", "*/*");
+            headers.set("Accept-Encoding", "gzip, deflate, br");
+            headers.set("Connection", "keep-alive");
+            HttpEntity entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            String res = response.getBody();
+            System.out.println("res:"+res);
+            return "查询的项目的任务信息:"+res;
+
+        };
+    }
+
+}

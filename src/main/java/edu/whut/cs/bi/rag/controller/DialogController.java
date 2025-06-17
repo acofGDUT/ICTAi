@@ -1,5 +1,6 @@
 package edu.whut.cs.bi.rag.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonObject;
 import com.tencent.tcvectordb.client.VectorDBClient;
 import com.tencent.tcvectordb.model.AIDatabase;
@@ -34,8 +35,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 @Controller
-@RequestMapping("/api")
+@RequestMapping("/api-ai")
 public class DialogController {
     @Autowired
     private ChatModel chatModel;
@@ -52,16 +54,20 @@ public class DialogController {
     @ResponseBody
     @CrossOrigin(origins = "*")
     @GetMapping("/dialog")
-    public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) {
+    public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) throws JsonProcessingException {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
-
+        String token = userSessionService.getToken(userId);
         ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是智能助手，主要着眼于桥梁检测领域。" +
                         "！！！切记，无论问题如何，你的任何回答一定需要包含检索来源这一项，！！！尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。" +
-                        "你可以使用用的工具包括：获取桥梁属性树。" +
-                        "使用工具前，请获取桥梁的名称")
+                        "你可以使用用的工具包括：根据桥梁名和token获取桥梁属性树、根据用户Id和token获取用户参与的项目信息、根据项目Id和token获取该项目中的任务信息。" +
+                        "使用工具前，请从对话或工具获取需要的参数。例如：在获取任务前，请从对话或获取到的项目中提取项目Id\n" +
+                        "！！！注意 project 和 task 的区别。在桥梁检测场景中，project（项目） 中 有许多task（任务）。当用户询问有哪些任务（task）时，需要从用户参与的项目（project）中找到与用户相关的任务（task）。 " +
+                        "！！！使用需要token的工具，请确保已有token。" +
+                        "这是该用户的Id："+userId+
+                        "\n ！！！这是登录时拿到的token：："+token)
                 .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
-        String content_original = userSessionService.getOrCreateChatClient(userId, builder)
+        Flux<String> flux = userSessionService.getOrCreateChatClient(userId, builder)
                 .prompt(new Prompt("这是一个示例回答，请将主体内容和检索依据分开。！！切记，无论问题如何，一定需要包含检索来源，并使用‘检索来源为’作为检索来源内容的开始，方便后续的内容处理：" +
                         "您好，桥梁检测的主要内容包括：\n" +
                         "\n" +
@@ -78,11 +84,12 @@ public class DialogController {
                         OpenAiChatOptions.builder()
                                 .build()
                 )).user(message)
-                .functions("getBiProperty")
-                .call()
-                .content();
-
+                .functions("getBiProperty","getBiPropject","getBiTask")
+                .stream().content();
+        String content_original = flux.reduce((accumulator, item) -> accumulator + item)
+                .block();
         Map<String, String> result = new HashMap<>();
+
         String content = new String();
         String reference = new String();
 
@@ -94,8 +101,6 @@ public class DialogController {
         if (matcher.find()) {
              content = matcher.group(1).trim();
              reference = matcher.group(2).trim();
-            System.out.println("正文：\n" + content);
-            System.out.println("\n检索来源\n" + reference);
         }
         if(reference != null && !reference.isEmpty()){
             result.put("content", content);
@@ -104,7 +109,6 @@ public class DialogController {
             result.put("content", content_original);
             result.put("reference", "检索来源为：我的知识库。");
         }
-
 
         return result;
     }
@@ -176,9 +180,16 @@ public class DialogController {
                  "- 病害位置（position）：" + position + "   \n" +
                  "- 病害面积（area）：" + area + "   \n" +
                  "\n" +
-                 "分析该病害的可能成因，输出简洁易懂的成因分析结论。";
+                 "分析该病害的可能成因，输出简洁专业的成因分析结论。" +
+                 "！！！ 不需要任何样式。" +
+                 "如下是一个示例回答：" +
+                 "支座塌陷严重的可能成因分析如下：\n" +
+                 "1. 排水设施不足：桥面伸缩缝处排水设施不到位，导致水分积聚，在支座处形成腐蚀环境。\n" +
+                 "2. 水土流失：长期雨水浸泡可能导致支座基础土壤流失，影响支座稳定性。\n" +
+                 "3. 材料老化：支座材料老化或者受力不均，导致承载能力降低，最终导致塌陷。\n" +
+                 "4. 施工缺陷：支座在施工过程中可能存在质量问题，例如混凝土浇筑不实，导致强度不足。";
 
-         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.builder().query(prompt).topK(10).build())).defaultSystem("你是一个桥梁检测方面的专家，请根据向量数据库的检索结果和行业知识回答用户的问题。注意回答精简。").build();
+         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.builder().query(prompt).topK(5).build())).defaultSystem("你是一个桥梁检测方面的专家，请根据向量数据库的检索结果和行业知识回答用户的问题。回答时给出一段话。").build();
          return chatClient.prompt(prompt).user("我需要你给出病害成因分析").stream().content();
 
     }
