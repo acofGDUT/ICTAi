@@ -158,7 +158,7 @@ public class DialogController {
     @ResponseBody
     @CrossOrigin(origins = "*")
     @PostMapping("/disease/cause")
-    public Flux<String> getDiseaseCause(@RequestParam Map<String,String> params) {
+    public Flux<String> getDiseaseCause(@RequestBody Map<String,String> params) {
          String template = params.get("template");
          String parentObject = params.get("parentObjedct");
          String object = params.get("object");
