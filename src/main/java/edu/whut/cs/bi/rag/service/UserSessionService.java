@@ -26,6 +26,10 @@ public class UserSessionService {
     private String base_Url;
     private final Map<String, ChatMemory> userChatMemories = new ConcurrentHashMap<>();
     private final Map<String, ChatClient> userChatClients = new ConcurrentHashMap<>();
+    @Value("${bi-Username}")
+    private String bi_Username;
+    @Value("${bi-Password}")
+    private String bi_Password;
 
     public ChatMemory getOrCreateChatMemory(String userId) {
         return userChatMemories.computeIfAbsent(userId, key -> new InMemoryChatMemory());
@@ -43,8 +47,8 @@ public class UserSessionService {
         userChatClients.remove(userId);
     }
 
-    public String getToken(String userId) throws JsonProcessingException {
-        String url = base_Url+"/jwt/login?username=admin&password=123456";
+    public String getToken() throws JsonProcessingException {
+        String url = base_Url+"/jwt/login?username="+bi_Username+"&password="+bi_Password;
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", "*/*");
         headers.set("Accept-Encoding", "gzip, deflate, br");
@@ -57,7 +61,7 @@ public class UserSessionService {
         Map<String, Object> jsonMap = mapper.readValue(jsonStr, Map.class);
         // 从Map中获取token字段
         String token = (String) jsonMap.get("token");
-        System.out.println("返回的携带token的返回信息："+token);
+        System.out.println("返回的携带token："+token);
         return token;
     }
 } 

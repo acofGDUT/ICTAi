@@ -37,6 +37,9 @@ spring:
           dimensions: 1536
           max-document-batch-size: 10000 # Optional: Maximum number of documents per batch
 bi-location: http://60.205.13.156:8090
+bi-tokenExpirationInSeconds: 1800
+bi-Username: admin_ai
+bi-Password: 123456
 #bi-location: http://localhost:80
 #    vectorstore:
 #      milvus:

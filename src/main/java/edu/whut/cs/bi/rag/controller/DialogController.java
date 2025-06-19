@@ -56,31 +56,28 @@ public class DialogController {
     @GetMapping("/dialog")
     public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) throws JsonProcessingException {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
-        String token = userSessionService.getToken(userId);
-        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是智能助手，主要着眼于桥梁检测领域。" +
-                        "！！！切记，无论问题如何，你的任何回答一定需要包含检索来源这一项，！！！尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。" +
-                        "你可以使用用的工具包括：根据桥梁名和token获取桥梁属性树、根据用户Id和token获取用户参与的项目信息、根据项目Id和token获取该项目中的任务信息。" +
+        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是智能检测助手，当用户和你打招呼时（如你好等），介绍自己的工作即可。" +
+                        "！！！切记，你的任何回答一定需要包含检索来源这一项，尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。" +
+                        "你可以使用用的工具包括：根据桥梁名获取桥梁属性树、根据用户Id获取用户参与的项目信息、根据项目Id获取该项目中的任务信息。" +
                         "使用工具前，请从对话或工具获取需要的参数。例如：在获取任务前，请从对话或获取到的项目中提取项目Id\n" +
                         "！！！注意 project 和 task 的区别。在桥梁检测场景中，project（项目） 中 有许多task（任务）。当用户询问有哪些任务（task）时，需要从用户参与的项目（project）中找到与用户相关的任务（task）。 " +
                         "！！！使用需要token的工具，请确保已有token。" +
-                        "这是该用户的Id："+userId+
-                        "\n ！！！这是登录时拿到的token：："+token)
+                        "这是和你对话的用户Id："+userId+"\n 这是一个示例问答；用户问题：桥梁检测有哪些内容？\n你的回答：\" +\n" +
+                        "                        \"桥梁检测的主要内容包括：\\n\" +\n" +
+                        "                        \"\\n\" +\n" +
+                        "                        \"1. **混凝土电阻率**：混凝土的电阻率可以反映其导电性能，间接判断钢筋的可能锈蚀速率。电阻率越小，混凝土的导电性越强，钢筋锈蚀发展速度越快。\\n\" +\n" +
+                        "                        \"\\n\" +\n" +
+                        "                        \"2. **检查方法和性能指标**：在进行桥梁检查前，需依据设计文件与设计单位、生产厂商明确检查方法和评定标准，并形成正式文件，以作为后续检查和评价的依据。\\n\" +\n" +
+                        "                        \"\\n\" +\n" +
+                        "                        \"3. **特殊检查的资料准备**：进行特殊检查时，需要准备包括设计文件、计算程序、方法及计算结果等资料。如果原始资料不全或存疑，则需现场测绘构造尺寸，测试构件材料组成及性能，并勘查水文地质情况。\\n\" +\n" +
+                        "                        \"\\n\" +\n" +
+                        "                        \"4. **病害及时修复**：在定期检查中发现桥梁病害时，应及时进行修复和养护，以确保桥梁的安全性和使用寿命。\\n\" +\n" +
+                        "                        \"\\n\" +\n" +
+                        "                        \"检索来源为《公路桥涵养护规范（JTG 5120－2021）》等。")
                 .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
         Flux<String> flux = userSessionService.getOrCreateChatClient(userId, builder)
-                .prompt(new Prompt("这是一个示例回答，请将主体内容和检索依据分开。！！切记，无论问题如何，一定需要包含检索来源，并使用‘检索来源为’作为检索来源内容的开始，方便后续的内容处理：" +
-                        "您好，桥梁检测的主要内容包括：\n" +
-                        "\n" +
-                        "1. **混凝土电阻率**：混凝土的电阻率可以反映其导电性能，间接判断钢筋的可能锈蚀速率。电阻率越小，混凝土的导电性越强，钢筋锈蚀发展速度越快。\n" +
-                        "\n" +
-                        "2. **检查方法和性能指标**：在进行桥梁检查前，需依据设计文件与设计单位、生产厂商明确检查方法和评定标准，并形成正式文件，以作为后续检查和评价的依据。\n" +
-                        "\n" +
-                        "3. **特殊检查的资料准备**：进行特殊检查时，需要准备包括设计文件、计算程序、方法及计算结果等资料。如果原始资料不全或存疑，则需现场测绘构造尺寸，测试构件材料组成及性能，并勘查水文地质情况。\n" +
-                        "\n" +
-                        "4. **病害及时修复**：在定期检查中发现桥梁病害时，应及时进行修复和养护，以确保桥梁的安全性和使用寿命。\n" +
-                        "\n" +
-                        "检索来源为《公路桥涵养护规范（JTG 5120－2021）》等。"
-                        ,
+                .prompt(new Prompt("",
                         OpenAiChatOptions.builder()
                                 .build()
                 )).user(message)

@@ -1,5 +1,7 @@
 package edu.whut.cs.bi.rag.tools;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import edu.whut.cs.bi.rag.service.TokenManager;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,13 +22,14 @@ public class BiQueryTools {
     private String base_Url;
     @Resource
     private RestTemplate restTemplate;
+    @Resource
+    private TokenManager tokenManager;
 
+    public record BiPropertyRequest(String BuildingName){};
 
-    public record BiPropertyRequest(String BuildingName,String token){};
-
-    public record BiProjectRequest(String UserId,String token){
+    public record BiProjectRequest(String UserId){
     }
-    public record  BiTaskRequest(String ProjectId,String token){}
+    public record  BiTaskRequest(String ProjectId){}
 
     @Bean
     @Description("通过桥梁名称和token拿到桥梁属性树")
@@ -34,7 +37,11 @@ public class BiQueryTools {
             return request->{
                 String url = base_Url+"/toolCallingApi/building/"+request.BuildingName+"/property";
                 HttpHeaders headers = new HttpHeaders();
-                headers.set("Authorization",request.token);
+                try {
+                    headers.set("Authorization",tokenManager.getToken());
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 headers.set("Accept", "*/*");
                 headers.set("Accept-Encoding", "gzip, deflate, br");
                 headers.set("Connection", "keep-alive");
@@ -53,7 +60,11 @@ public class BiQueryTools {
         return request->{
             String url = base_Url+"/toolCallingApi/project/"+request.UserId;
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization",request.token);
+            try {
+                headers.set("Authorization",tokenManager.getToken());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             headers.set("Accept", "*/*");
             headers.set("Accept-Encoding", "gzip, deflate, br");
             headers.set("Connection", "keep-alive");
@@ -71,7 +82,11 @@ public class BiQueryTools {
         return request->{
             String url = base_Url+"/toolCallingApi/project/"+request.ProjectId+"/task";
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization",request.token);
+            try {
+                headers.set("Authorization",tokenManager.getToken());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             headers.set("Accept", "*/*");
             headers.set("Accept-Encoding", "gzip, deflate, br");
             headers.set("Connection", "keep-alive");
