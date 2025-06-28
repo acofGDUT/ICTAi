@@ -136,7 +136,6 @@
             </snapshots>
         </repository>
     </repositories>
-
     <build>
         <plugins>
             <!-- Spring Boot Maven Plugin -->

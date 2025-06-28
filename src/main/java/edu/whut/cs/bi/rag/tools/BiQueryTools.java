@@ -32,7 +32,7 @@ public class BiQueryTools {
     public record  BiTaskRequest(String ProjectId){}
 
     @Bean
-    @Description("通过桥梁名称和token拿到桥梁属性树")
+    @Description("通过桥梁名称拿到桥梁属性树，属性树中包含桥梁结构信息、属性信息。")
     public Function<BiPropertyRequest, String> getBiProperty() {
             return request->{
                 String url = base_Url+"/toolCallingApi/building/"+request.BuildingName+"/property";
@@ -55,7 +55,7 @@ public class BiQueryTools {
 
 
     @Bean
-    @Description("通过userId和token拿到该人员参与的项目(Project)信息")
+    @Description("通过userId拿到该人员参与的项目(Project)信息")
     public Function<BiProjectRequest, String> getBiPropject() {
         return request->{
             String url = base_Url+"/toolCallingApi/project/"+request.UserId;
@@ -77,7 +77,7 @@ public class BiQueryTools {
     }
 
     @Bean
-    @Description("通过工具或对话拿到的projectId(项目Id)和token拿到任务(task)信息")
+    @Description("通过工具或对话拿到的projectId(项目Id)拿到任务(task)信息")
     public Function<BiTaskRequest, String> getBiTask() {
         return request->{
             String url = base_Url+"/toolCallingApi/project/"+request.ProjectId+"/task";
