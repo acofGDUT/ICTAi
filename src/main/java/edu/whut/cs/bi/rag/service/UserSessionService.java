@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,16 +27,25 @@ public class UserSessionService {
     private String base_Url;
     private final Map<String, ChatMemory> userChatMemories = new ConcurrentHashMap<>();
     private final Map<String, ChatClient> userChatClients = new ConcurrentHashMap<>();
+    private Map<String, Instant> userMemoryCreateTimes = new ConcurrentHashMap<>();
     @Value("${bi-Username}")
     private String bi_Username;
     @Value("${bi-Password}")
     private String bi_Password;
-
+    @Value("${bi-chatMemory-expired-time-seconds}")
+    private long bi_chatMemory_expired_time_seconds;
     public ChatMemory getOrCreateChatMemory(String userId) {
+        if(userChatMemories.containsKey(userId) == false){
+            userMemoryCreateTimes.put(userId, Instant.now());
+        }
         return userChatMemories.computeIfAbsent(userId, key -> new InMemoryChatMemory());
     }
 
     public ChatClient getOrCreateChatClient(String userId, ChatClient.Builder builder) {
+        Instant createTime = userMemoryCreateTimes.get(userId);
+        if(null!= createTime && Instant.now().isAfter(createTime.plusSeconds(bi_chatMemory_expired_time_seconds))){
+            clearUserSession(userId);
+        }
         return userChatClients.computeIfAbsent(userId, key -> 
             builder.defaultAdvisors(new MessageChatMemoryAdvisor(getOrCreateChatMemory(userId)))
                   .build()

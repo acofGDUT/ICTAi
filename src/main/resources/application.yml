@@ -40,6 +40,7 @@ bi-location: http://60.205.13.156:8090
 bi-tokenExpirationInSeconds: 1800
 bi-Username: admin_ai
 bi-Password: 123456
+bi-chatMemory-expired-time-seconds: 1800    #单位分钟
 #bi-location: http://localhost:80
 #    vectorstore:
 #      milvus:
