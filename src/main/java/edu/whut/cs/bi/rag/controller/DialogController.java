@@ -28,10 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,28 +54,32 @@ public class DialogController {
     @GetMapping("/dialog")
     public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) throws JsonProcessingException {
         SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
-        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem("你一个是智能检测助手，当用户和你打招呼时（如你好等），介绍自己的工作即可。" +
-                        "!!!切记，你的任何回答一定需要包含检索来源这一项，尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。" +
-                        "你可以使用用的工具包括：根据桥梁名获取桥梁各种基本信息其中包括：行政识别数据（如路线名称、路线等级、设计荷载、桥位桩号、功能类型、监理单位 等）、桥梁技术指标（如桥梁全长、桥面总宽、车道宽度、护栏或防撞墙高度、桥面标准净空、历史洪水位、设计洪水频率及其水位 等）、结构信息、档案资料、检测评定历史、养护处治记录、其他（如桥梁的正面和总体照片）。;" + "\n"+
-                        "根据用户Id获取用户参与的所有项目信息;" + "\n"+
-                        "根据项目Id获取该项目中的所有的任务信息。" + "\n"+
-                        "使用工具前，请从对话或工具获取需要的参数。\n" +
-                        "!!!注意 project 和 task 的区别。在桥梁检测场景中，project（项目） 中 有许多task（任务）。当用户询问有哪些任务（task）时，需要从用户参与的项目（project）中找到对应的任务（task）!!!注意，如果用户参与了项目A，那么A中的所有任务，用户都需要参与。" +
-                        "!!!当用户提问参与的检测任务时，需要使用获取的projectId调用工具获取所有任务信息，如果projectId有多个，则需要多次使用工具以获取完整的任务信息，task中最重要的信息是building(一个桥可能分为了多个building)。" +
-                        "回答项目信息或任务信息时需详细，但是注意忽略用户（检测人员）不关心的信息如项目Id、任务Id等。" +
-                        "!!!返回的内容格式请使用MarkDwon语法，分点的内容注意加粗，如果包含图片，请使用![图片描述](图片路径或URL)、即图片插入语法。" +"\n"+
-                        "这是和你对话的用户Id："+userId+"\n 这是一个示例问答；用户问题：桥梁检测有哪些内容？\n你的回答：\" +\n" +
-                        "                        \"桥梁检测的主要内容包括：\\n\" +\n" +
-                        "                        \"\\n\" +\n" +
-                        "                        \"1. **混凝土电阻率**：混凝土的电阻率可以反映其导电性能，间接判断钢筋的可能锈蚀速率。电阻率越小，混凝土的导电性越强，钢筋锈蚀发展速度越快。\\n\" +\n" +
-                        "                        \"\\n\" +\n" +
-                        "                        \"2. **检查方法和性能指标**：在进行桥梁检查前，需依据设计文件与设计单位、生产厂商明确检查方法和评定标准，并形成正式文件，以作为后续检查和评价的依据。\\n\" +\n" +
-                        "                        \"\\n\" +\n" +
-                        "                        \"3. **特殊检查的资料准备**：进行特殊检查时，需要准备包括设计文件、计算程序、方法及计算结果等资料。如果原始资料不全或存疑，则需现场测绘构造尺寸，测试构件材料组成及性能，并勘查水文地质情况。\\n\" +\n" +
-                        "                        \"\\n\" +\n" +
-                        "                        \"4. **病害及时修复**：在定期检查中发现桥梁病害时，应及时进行修复和养护，以确保桥梁的安全性和使用寿命。\\n\" +\n" +
-                        "                        \"\\n\" +\n" +
-                        "                        \"检索来源为《公路桥涵养护规范（JTG 5120－2021）》等。")
+        String robotDescription = "你一个是智能检测助手，当用户和你打招呼时（如你好等），介绍自己的工作即可。\n";
+        String datePrompt = "这是今天的日期" + LocalDate.now() + "。\n";
+        String answerRequirement = "!!!切记，你的任何回答一定需要包含检索来源这一项，尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。\n回答项目信息或任务信息时需详细，但是注意忽略用户（检测人员）不关心的信息如项目Id、任务Id等。\n!!!返回的内容格式请使用MarkDwon语法，分点的内容注意加粗，如果包含图片，请使用![图片描述](图片路径或URL)、即图片插入语法。\n";
+        String toolDescription =  "你可以使用用的工具包括：根据桥梁名称查询桥梁列表，列表中包含与名称相关的多座桥梁信息，信息包括：桥梁Id(buildingId)等;\n根据桥梁Id(buildingId)和年份查询该桥该年的病害信息;\n根据桥梁名获取桥梁详细基本信息,信息包括：行政识别数据（如路线名称、路线等级、设计荷载、桥位桩号、功能类型、监理单位 等）、桥梁技术指标（如桥梁全长、桥面总宽、车道宽度、护栏或防撞墙高度、桥面标准净空、历史洪水位、设计洪水频率及其水位 等）、结构信息、档案资料、检测评定历史、养护处治记录、其他（如桥梁的正面和总体照片）;\n根据用户Id获取用户参与的所有项目信息;\n根据项目Id获取该项目中的所有的任务信息;\n";
+        String toolRequirement = "使用工具前，请从对话或工具获取需要的参数。\n 注意 project 和 task 的区别。在桥梁检测场景中，project（项目） 中 有许多task（任务）。当用户询问有哪些任务（task）时，需要从用户参与的项目（project）中找到对应的任务（task）!!!注意，如果用户参与了项目A，那么A中的所有任务，用户都需要参与。!!!当用户提问参与的检测任务时，需要使用获取的projectId调用工具获取所有任务信息，如果projectId有多个，则需要多次使用工具以获取完整的任务信息，一个task对应一个building(桥梁)。\n 当用户提问病害信息时，若只给出了桥梁名称，请确保通过对话或工具获取了桥梁Id(buildingId)，若用户未给出年份，默认使用今年作为年份来查询病害，并在回答病害时向用户表明查询时使用的年份，并告知其可以指定其他年份;\n";
+        String UserIdPrompt = "!!!这是和你对话的用户Id："+userId+"\n";
+        String examplePrompt =  "这是一个示例问答；用户问题：桥梁检测有哪些内容？\n你的回答：\" +\n" +
+                "                        \"桥梁检测的主要内容包括：\\n\" +\n" +
+                "                        \"\\n\" +\n" +
+                "                        \"1. **混凝土电阻率**：混凝土的电阻率可以反映其导电性能，间接判断钢筋的可能锈蚀速率。电阻率越小，混凝土的导电性越强，钢筋锈蚀发展速度越快。\\n\" +\n" +
+                "                        \"\\n\" +\n" +
+                "                        \"2. **检查方法和性能指标**：在进行桥梁检查前，需依据设计文件与设计单位、生产厂商明确检查方法和评定标准，并形成正式文件，以作为后续检查和评价的依据。\\n\" +\n" +
+                "                        \"\\n\" +\n" +
+                "                        \"3. **特殊检查的资料准备**：进行特殊检查时，需要准备包括设计文件、计算程序、方法及计算结果等资料。如果原始资料不全或存疑，则需现场测绘构造尺寸，测试构件材料组成及性能，并勘查水文地质情况。\\n\" +\n" +
+                "                        \"\\n\" +\n" +
+                "                        \"4. **病害及时修复**：在定期检查中发现桥梁病害时，应及时进行修复和养护，以确保桥梁的安全性和使用寿命。\\n\" +\n" +
+                "                        \"\\n\" +\n" +
+                "                        \"检索来源为《公路桥涵养护规范（JTG 5120－2021）》等。";
+        ChatClient.Builder builder = ChatClient.builder(chatModel).defaultSystem(
+                    robotDescription
+                        + answerRequirement
+                        + toolDescription
+                        + toolRequirement
+                        + UserIdPrompt
+                        + datePrompt
+                        + examplePrompt)
                 .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
 
         Flux<String> flux = userSessionService.getOrCreateChatClient(userId, builder)
@@ -85,7 +87,7 @@ public class DialogController {
                         OpenAiChatOptions.builder()
                                 .build()
                 )).user(message)
-                .functions("getBiProperty","getBiPropject","getBiTask")
+                .functions("getBiProperty","getBiPropject","getBiTask","getBiBuildings","getBiDisease")
                 .stream().content();
         String content_original = flux.reduce((accumulator, item) -> accumulator + item)
                 .block();

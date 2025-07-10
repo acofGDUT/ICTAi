@@ -144,7 +144,7 @@ public class FileUploadController {
                     }
                 }
             }
-            System.out.println(content);
+//            System.out.println(content);
             document.close();
 
             // 调用模型将内容转换为JSON
@@ -170,6 +170,7 @@ public class FileUploadController {
                     "以下为示例json:" +
                     "{\n" +
                     "  \"许家棚大桥-上行\": {\n" +
+                    "  \"桥梁所处行政区划代码\":"+"\"420302\",\n"+
                     "    \"行政识别数据\": {\n" +
                     "      \"路线编号\": \"G70\",\n" +
                     "      \"路线名称\": \"福州至银川高速公路\",\n" +
