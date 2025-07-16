@@ -30,7 +30,8 @@ spring:
 #          model: "Qwen2.5-7B-Instruct"
       embedding:
         options:
-          model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
+#          model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
+          model: "text-embedding-3-small"  # 使用OpenAI的嵌入模型
       vectorstore:
         pgvector:
           index-type: HNSW
