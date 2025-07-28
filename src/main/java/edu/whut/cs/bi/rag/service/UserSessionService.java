@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -25,7 +25,6 @@ public class UserSessionService {
     private RestTemplate restTemplate;
     @Value("${bi-location}")
     private String base_Url;
-    private final Map<String, ChatMemory> userChatMemories = new ConcurrentHashMap<>();
     private final Map<String, ChatClient> userChatClients = new ConcurrentHashMap<>();
     private Map<String, Instant> userMemoryCreateTimes = new ConcurrentHashMap<>();
     @Value("${bi-Username}")
@@ -34,26 +33,22 @@ public class UserSessionService {
     private String bi_Password;
     @Value("${bi-chatMemory-expired-time-seconds}")
     private long bi_chatMemory_expired_time_seconds;
-    public ChatMemory getOrCreateChatMemory(String userId) {
-        if(userChatMemories.containsKey(userId) == false){
-            userMemoryCreateTimes.put(userId, Instant.now());
-        }
-        return userChatMemories.computeIfAbsent(userId, key -> new InMemoryChatMemory());
-    }
 
     public ChatClient getOrCreateChatClient(String userId, ChatClient.Builder builder) {
         Instant createTime = userMemoryCreateTimes.get(userId);
-        if(null!= createTime && Instant.now().isAfter(createTime.plusSeconds(bi_chatMemory_expired_time_seconds))){
+        if(null == createTime) {
+            userMemoryCreateTimes.put(userId, Instant.now());
+        }
+        else if(null!= createTime && Instant.now().isAfter(createTime.plusSeconds(bi_chatMemory_expired_time_seconds))){
             clearUserSession(userId);
+            userMemoryCreateTimes.put(userId, Instant.now());
         }
         return userChatClients.computeIfAbsent(userId, key -> 
-            builder.defaultAdvisors(new MessageChatMemoryAdvisor(getOrCreateChatMemory(userId)))
-                  .build()
+            builder.build()
         );
     }
 
     public void clearUserSession(String userId) {
-        userChatMemories.remove(userId);
         userChatClients.remove(userId);
     }
 

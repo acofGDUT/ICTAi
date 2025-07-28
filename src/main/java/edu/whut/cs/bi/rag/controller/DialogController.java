@@ -12,9 +12,10 @@ import com.tencent.tcvectordb.model.param.entity.ContentInfo;
 import com.tencent.tcvectordb.model.param.entity.SearchContentInfo;
 import edu.whut.cs.bi.rag.service.UserSessionService;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
+import edu.whut.cs.bi.rag.tools.BiQueryTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
@@ -53,11 +54,13 @@ public class DialogController {
     @Autowired
     private VectorDBClientOnlineService  OnlineDBclient;
 
+    @Autowired
+    private BiQueryTools biQueryTools;
     @ResponseBody
     @CrossOrigin(origins = "*")
     @GetMapping("/dialog")
     public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId) throws JsonProcessingException {
-        SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
+//        SearchRequest searchRequest = SearchRequest.builder().query(message).topK(5).build();
         String robotDescription = "你一个是智能检测助手，当用户和你打招呼时（如你好等），介绍自己的工作即可。\n";
         String datePrompt = "这是今天的日期" + LocalDate.now() + "。\n";
         String answerRequirement = "!!!切记，你的任何回答一定需要包含检索来源这一项，尽量使用标准或规范作为检索来源。并使用‘检索来源为’作为这一项的开始，若找不到来源，这一项为 检索来源为：我的知识库。\n回答项目信息或任务信息时需详细，但是注意忽略用户（检测人员）不关心的信息如项目Id、任务Id等。\n!!!返回的内容格式请使用MarkDwon语法，分点的内容注意加粗;!!!如果包含图片，请使用markDown的图片插入语法，如![图片名](图片url)\n";
@@ -76,15 +79,14 @@ public class DialogController {
                         + UserIdPrompt
                         + datePrompt
                         + examplePrompt
-                )
-                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,searchRequest));
+                ).defaultTools(biQueryTools)
+                .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().query(message).similarityThreshold(0.8d).topK(5).build()).build());
 
         Flux<String> flux = userSessionService.getOrCreateChatClient(userId, builder)
                 .prompt(new Prompt("",
                         OpenAiChatOptions.builder()
                                 .build()
                 )).user(message)
-                .functions("getBiProperty","getBiPropject","getBiTask","getBiBuildings","getBiDisease")
                 .stream().content();
         String content_original = flux.reduce((accumulator, item) -> accumulator + item)
                 .block();
@@ -189,8 +191,8 @@ public class DialogController {
                  "3. 材料老化：支座材料老化或者受力不均，导致承载能力降低，最终导致塌陷。\n" +
                  "4. 施工缺陷：支座在施工过程中可能存在质量问题，例如混凝土浇筑不实，导致强度不足。";
 
-         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.builder().query(prompt).topK(5).build())).defaultSystem("你是一个桥梁检测方面的专家，请根据向量数据库的检索结果和行业知识回答用户的问题。回答时给出一段话。").build();
-         return chatClient.prompt(prompt).user("我需要你给出病害成因分析").stream().content();
+         ChatClient chatClient = ChatClient.builder(chatModel).defaultSystem("你是一个桥梁检测方面的专家，请根据向量数据库的检索结果和行业知识回答用户的问题。回答时给出一段话。").build();
+         return chatClient.prompt(prompt).advisors(QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().query(prompt).similarityThreshold(0.8d).topK(5).build()).build()).user("我需要你给出病害成因分析").stream().content();
 
     }
 

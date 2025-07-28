@@ -13,7 +13,6 @@ import com.tencent.tcvectordb.model.param.collectionView.SplitterPreprocessParam
 import com.tencent.tcvectordb.model.param.enums.ParsingTypeEnum;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
@@ -551,9 +550,7 @@ public class FileUploadController {
     public String processChunk(String chunk, int index) throws Exception {
         // 调用模型将内容转换为JSON
         System.out.println( "Processing chunk " + index );
-        ChatClient chatClient = ChatClient.builder(chatModel)
-                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore, SearchRequest.builder().topK(5).build()))
-                .build();
+        ChatClient chatClient = ChatClient.builder(chatModel).build();
 
         String prompt = "你是一个格式转换专家，假设有多个你合作将分散有序的word片段转换成json格式，请将以下桥梁卡片部分内容解析为JSON格式，完整JSON格式如下：\n" +
                 "- 根节点为桥梁名称。\n" +
@@ -619,9 +616,7 @@ public class FileUploadController {
             System.out.println("Processing chunk " + future.get());
             msg.append(future.get());
         }
-        ChatClient chatClient = ChatClient.builder(chatModel)
-                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore, SearchRequest.builder().topK(5).build()))
-                .build();
+        ChatClient chatClient = ChatClient.builder(chatModel).build();
 
         String prompt = "你是一个格式转换专家，假设有多个你已经将分散有序的word片段转换成json格式，请将汇总的内容合并为完整的JSON格式，完整JSON格式如下：\n" +
                 "- 根节点为桥梁名称。\n" +
