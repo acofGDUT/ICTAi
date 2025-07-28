@@ -23,11 +23,15 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -188,6 +192,23 @@ public class DialogController {
          ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(new QuestionAnswerAdvisor(vectorStore,SearchRequest.builder().query(prompt).topK(5).build())).defaultSystem("你是一个桥梁检测方面的专家，请根据向量数据库的检索结果和行业知识回答用户的问题。回答时给出一段话。").build();
          return chatClient.prompt(prompt).user("我需要你给出病害成因分析").stream().content();
 
+    }
+
+
+    @PostMapping("/diseaseSummary")
+    public ResponseEntity<String> diseaseSummary(@RequestBody String jsonData) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("text", "plain", StandardCharsets.UTF_8));
+        ChatClient chatClient = ChatClient.builder(chatModel).defaultSystem("你是一个桥梁检测报告书写人员，负责统计病害的类型和个数，!!!请仔细计算，确保数量和量化信息准确!!!如果病害存在面积等量化信息，需要进行统计，若没有则统计数量即可。生成一段病害小结，小结的格式请严格参照示例，直接列出病害总结，以便于插入文档中。无需给出个人观点和建议。\n"+"这是两个示例回答，示例一：\n" +
+                "1）桥面板：纵向裂缝、纵向裂缝伴析白393条，总长度110040cm，宽度介于0.05～0.18mm；斜向裂缝、斜向裂缝伴析白14条，总长度3550cm，宽度介于0.06～0.14mm；网状裂缝6处，总面积340000cm²；破损、破损露筋14处，总面积28700m²，破损析白4处，总面积8000cm²；锈胀露筋5处，总面积4200cm²；空洞露筋1处，面积200cm²；麻面、麻面露筋7处，总面积39300cm²；保护层过薄2处，总面积340000cm²；渗水1处。\n" +
+                "2）横梁：竖向裂缝、竖向裂缝伴析白176条，总长度31025cm，宽度介于0.05～0.22mm；横向裂缝35条，总长度12550cm，宽度介于0.06～0.15mm；斜向裂缝19条，总长度5740cm，宽度介于0.06～0.14mm；L型裂缝4条，总长度320cm，宽度0.10mm；破损、破损露筋9处，总面积34500cm²；网状裂缝16处，总面积215600cm²，宽度介于0.06～0.22mm；麻面、麻面露筋2处，面积4600cm²；锈胀露筋1处，面积1000cm²；空洞露筋1处，面积600cm²；析白1处，面积2000cm²。\n" +
+                "3）纵梁：纵向裂缝、纵向裂缝伴析白13条，长度4190cm，宽度介于0.08～0.15mm；竖向裂缝1条，长度100cm，宽度0.05mm；网状裂缝3处，总面积33000cm²，宽度0.12mm；锈胀露筋25处，总面积37600cm²；破损、破损露筋14处，总面积30250cm²；麻面露筋3处，总面积5300cm²；析白1处，面积600cm²；保护层过薄2处，总面积6000cm²。\n" +
+                "4）齿块：竖向裂缝3条，总长度250cm，宽度0.08mm；锈胀露筋8处，总面积37300cm²；破损露筋2处，总面积1800cm²。\n"
+                +"示例二："+
+                "斜拉索划痕88处，总面积429cm²；刮痕40处，总面积690cm²；压痕6处，总面积48cm²。").build();
+        Flux<String> flux  = chatClient.prompt("这是这次的病害信息，以json格式存放,需要重点关注的字段有description(病害描述),biObjectName(存在病害的桥梁结构信息),type(病害类型),quantity(病害数量)。description携带了面积等量化信息："+jsonData).user("请生成病害小结").stream().content();
+        String content = flux.reduce((accumulator, item) -> accumulator + item).block();
+        return ResponseEntity.ok().headers(headers).body(content);
     }
 
 

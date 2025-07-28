@@ -25,7 +25,8 @@ spring:
       chat:
         options:
 #          model: "gpt-4o-mini"  # 使用OpenAI的GPT-4o-mini模型
-          model: "gpt-4.1-mini"  # 可选项， 该模型 相比 4o-mini 贵4倍 ，长文本处理效果好很多。
+#          model: "gpt-4.1-mini"  # 可选项， 该模型 相比 4o-mini 贵4倍 ，长文本处理效果好很多。
+          model: "o4-mini-2025-04-16"  # 可选项，长文本处理效果好很多。
           temperature: 0.7
 #          model: "Qwen2.5-7B-Instruct"
       embedding:
