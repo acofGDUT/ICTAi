@@ -3,6 +3,7 @@ package edu.whut.cs.bi.rag.tools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.whut.cs.bi.rag.service.TokenManager;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 @Component
+@Slf4j
 public class BiQueryTools {
     @Value("${bi-location}")
     private String base_Url;
@@ -41,7 +43,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-//            System.out.println("查询的桥梁所有基本属性的 json文本:"+res);
+            log.info("查询的桥梁所有基本属性的 json文本:"+res);
             return "查询的桥梁所有基本属性的 json文本:"+res;
         }
 
@@ -61,7 +63,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-//            System.out.println("查询的用户项目json文本:"+res);
+            log.info("查询的用户项目json文本:"+res);
             return "查询的用户项目json文本:"+res;
         }
 
@@ -81,7 +83,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-//            System.out.println("查询的项目的任务json文本:"+res);
+            log.info("查询的项目任务json文本:"+res);
             return "查询的项目的任务json文本:"+res;
     }
 
@@ -100,7 +102,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-//            System.out.println("查询的桥梁列表json文本为:"+res);
+            log.info("查询的桥梁列表json文本为:"+res);
             return "查询的桥梁列表json文本为:"+res;
     }
 
@@ -119,7 +121,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-//            System.out.println("查询的桥梁在"+year+"年的病害信息的json文本为:"+res);
+            log.info("查询的桥梁在"+year+"年的病害信息的json文本为:"+res);
             return "查询的桥梁在"+year+"年的病害信息的json文本为:"+res;
     }
 
