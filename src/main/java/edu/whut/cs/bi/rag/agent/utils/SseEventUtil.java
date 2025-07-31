@@ -1,7 +1,6 @@
 package edu.whut.cs.bi.rag.agent.utils;
 
 
-import edu.whut.cs.bi.rag.agent.model.AgentResult;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
@@ -43,12 +42,11 @@ public class SseEventUtil {
         sendSseEvent(emitter, "error", message);
     }
     
-    public void runAgent(SseEmitter emitter, String agentName, String agentRunId) {
-        sendSseEvent(emitter, "runAgent", Map.of("agentName", agentName, "agentRunId", agentRunId));
+    public void runAgent(SseEmitter emitter, String agentName) {
+        sendSseEvent(emitter, "runAgent", Map.of("agentName", agentName));
     }
     
-    public void agentEnd(SseEmitter emitter,String agentRunId, AgentResult result) {
-//        sendSseEvent(emitter, "agentEnd", Map.of("agentRunId", agentRunId, "result", result));
+    public void agentEnd(SseEmitter emitter) {
         sendSseEvent(emitter, "agentEnd", null);
     }
     

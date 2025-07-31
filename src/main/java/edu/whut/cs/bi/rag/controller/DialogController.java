@@ -1,6 +1,5 @@
 package edu.whut.cs.bi.rag.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.tencent.tcvectordb.client.VectorDBClient;
 import com.tencent.tcvectordb.model.AIDatabase;
 import com.tencent.tcvectordb.model.CollectionView;
@@ -8,8 +7,6 @@ import com.tencent.tcvectordb.model.param.dml.SearchByContentsParam;
 import com.tencent.tcvectordb.model.param.dml.SearchOption;
 import com.tencent.tcvectordb.model.param.entity.ContentInfo;
 import com.tencent.tcvectordb.model.param.entity.SearchContentInfo;
-import edu.whut.cs.bi.rag.agent.core.BaseAgent;
-import edu.whut.cs.bi.rag.agent.model.AgentResult;
 import edu.whut.cs.bi.rag.service.UserSessionService;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
 import edu.whut.cs.bi.rag.tools.BiQueryTools;
@@ -40,7 +37,7 @@ import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping("/api-ai")
-public class DialogController implements BaseAgent {
+public class DialogController {
     @Autowired
     private ChatModel chatModel;
     
@@ -214,26 +211,5 @@ public class DialogController implements BaseAgent {
     @PostMapping("/clear-session")
     public void clearSession(@RequestParam String userId) {
         userSessionService.clearUserSession(userId);
-    }
-    
-    @Override
-    public AgentResult run(String prompt) {
-        
-        
-        
-        
-        
-        AgentResult agentResult = new AgentResult();
-        return null;
-    }
-    
-    @Override
-    public String getDescription() {
-        return "";
-    }
-    
-    @Override
-    public String getName() {
-        return "";
     }
 }

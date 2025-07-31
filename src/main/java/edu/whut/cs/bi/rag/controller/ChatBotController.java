@@ -24,7 +24,7 @@ public class ChatBotController {
         // 创建一个 SseEmitter，超时时间设置为 5 分钟
         SseEmitter emitter = new SseEmitter(300_000L);
         // 调用异步服务来处理 AI 逻辑
-        agentService.processAgentRequest(prompt, emitter, chatId, userId);
+        agentService.chat(prompt, emitter, chatId, userId);
         // 立即返回 emitter 对象，HTTP 连接保持打开
         return emitter;
     }

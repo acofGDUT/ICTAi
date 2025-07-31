@@ -1,7 +1,9 @@
 package edu.whut.cs.bi.rag.agent.core;
 
 
-import edu.whut.cs.bi.rag.agent.model.AgentResult;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * Agent基础接口
@@ -13,7 +15,7 @@ public interface BaseAgent {
      * @param prompt 用户输入的提示
      * @return Agent的执行结果，一个包含文本和/或附件的AgentResult对象。
      */
-    AgentResult run(String prompt);
+    String run(String prompt, SseEmitter emitter, String chatId, String userId, MessageChatMemoryAdvisor chatMemoryAdvisor);
     
     /**
      * 获取Agent的描述信息
