@@ -1,8 +1,11 @@
 package edu.whut.cs.bi.rag.tools;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
 import edu.whut.cs.bi.rag.service.TokenManager;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -23,6 +30,9 @@ public class BiQueryTools {
     private RestTemplate restTemplate;
     @Autowired
     private TokenManager tokenManager;
+    
+    @Resource
+    SseEventUtil sseEventUtil;
 
 
 
@@ -101,7 +111,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-            log.info("查询的桥梁列表json文本为:"+res);
+        log.info("查询的桥梁列表json文本为");
             return "查询的桥梁列表json文本为:"+res;
     }
 
@@ -120,8 +130,21 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-            log.info("查询的桥梁在"+year+"年的病害信息的json文本为:"+res);
+        log.info("查询的桥梁在{}年的病害信息的json文本为", year);
             return "查询的桥梁在"+year+"年的病害信息的json文本为:"+res;
+    }
+    
+    @Tool(description = "向前端发送知识来源")
+    public void sendReference(@ToolParam(description = "知识来源的列表(list)，使用tool获取的信息统一来源是检索系统，如果是文档，则为文档全称。例如：系统检索, xxx文档") List<String> references, ToolContext toolContext) {
+        SseEmitter emitter = Optional.ofNullable(toolContext)
+                .map(ToolContext::getContext)
+                .map(context -> context.get("emitter"))
+                .filter(SseEmitter.class::isInstance)
+                .map(SseEmitter.class::cast)
+                .orElse(null);
+        if (emitter == null) return;
+        log.info("发送知识来源:{}", references);
+        references.forEach(reference -> sseEventUtil.knowledgeReference(emitter, reference));
     }
 
 

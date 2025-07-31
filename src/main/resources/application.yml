@@ -38,7 +38,7 @@ spring:
           distance-type: COSINE_DISTANCE
           dimensions: 1536
           max-document-batch-size: 10000 # Optional: Maximum number of documents per batch
-bi-location: http://60.205.13.156:8090
+bi-location: http://59.110.81.142:8090
 bi-tokenExpirationInSeconds: 1800
 bi-Username: admin_ai
 bi-Password: 123456

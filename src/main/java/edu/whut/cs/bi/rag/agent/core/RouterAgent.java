@@ -1,9 +1,10 @@
 package edu.whut.cs.bi.rag.agent.core;
 
+import edu.whut.cs.bi.rag.agent.model.AgentEnum;
 import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -12,36 +13,37 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class RouterAgent {
     
     AgentRegistry agentRegistry;
     ChatClient chatClient;
     
     @Resource
-    private SseEventUtil sseEventUtil;
-    
+    SseEventUtil sseEventUtil;
     
     public RouterAgent(AgentRegistry registry, ChatClient.Builder builder) {
-        chatClient = builder.build();
         agentRegistry = registry;
-        
-        systemPrompt = List.of(
+        List<String> strings = List.of(
                 "请根据用户需求选择合适的 agent 进行调用，只返回 agent 的名称",
                 getAgentInfo()
         );
+        chatClient = builder
+                .defaultOptions(OpenAiChatOptions.builder().model("gpt-4o-mini").build())
+                .defaultSystem(strings.toString())
+                .build();
     }
     
-    List<String> systemPrompt = null;
     
-    public String run(String prompt, SseEmitter emitter, String chatId, String userId, MessageChatMemoryAdvisor chatMemoryAdvisor) {
+    public AgentEnum run(String prompt, SseEmitter emitter, String chatId, String userId) {
         sseEventUtil.runAgent(emitter, "routerAgent");
-        String content = chatClient.prompt()
-                .options(OpenAiChatOptions.builder().model("gpt-4o-mini").build())
-                .system(systemPrompt.toString())
+        
+        AgentEnum entity = chatClient.prompt()
                 .user(prompt)
-                .call().content();
+                .call().entity(AgentEnum.class);
+        
         sseEventUtil.agentEnd(emitter);
-        return content;
+        return entity;
     }
     
     private String getAgentInfo() {
