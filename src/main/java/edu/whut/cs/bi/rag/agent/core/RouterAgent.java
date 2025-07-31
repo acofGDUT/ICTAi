@@ -4,7 +4,6 @@ import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -37,8 +36,6 @@ public class RouterAgent {
     public String run(String prompt, SseEmitter emitter, String chatId, String userId, MessageChatMemoryAdvisor chatMemoryAdvisor) {
         sseEventUtil.runAgent(emitter, "routerAgent");
         String content = chatClient.prompt()
-                .advisors(chatMemoryAdvisor)
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
                 .options(OpenAiChatOptions.builder().model("gpt-4o-mini").build())
                 .system(systemPrompt.toString())
                 .user(prompt)

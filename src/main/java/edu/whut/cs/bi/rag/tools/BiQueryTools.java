@@ -2,7 +2,6 @@ package edu.whut.cs.bi.rag.tools;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.whut.cs.bi.rag.service.TokenManager;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -43,7 +42,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-            log.info("查询的桥梁所有基本属性的 json文本:"+res);
+        log.info("查询的桥梁所有基本属性的json文本");
             return "查询的桥梁所有基本属性的 json文本:"+res;
         }
 
@@ -63,7 +62,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-            log.info("查询的用户项目json文本:"+res);
+        log.info("查询的用户项目json文本");
             return "查询的用户项目json文本:"+res;
         }
 
@@ -83,7 +82,7 @@ public class BiQueryTools {
             HttpEntity entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String res = response.getBody();
-            log.info("查询的项目任务json文本:"+res);
+        log.info("查询的项目任务json文本");
             return "查询的项目的任务json文本:"+res;
     }
 

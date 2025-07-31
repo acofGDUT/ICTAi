@@ -6,6 +6,7 @@ import edu.whut.cs.bi.rag.agent.core.BaseAgent;
 import edu.whut.cs.bi.rag.agent.core.RouterAgent;
 import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class AgentService {
     
@@ -49,6 +51,7 @@ public class AgentService {
         String agentName = routerAgent.run(prompt, emitter, chatId, userId, chatMemoryAdvisor);
         BaseAgent agent = agentRegistry.getAgent(agentName);
         if (agent == null) {
+            log.info("agent不存在: {}", agentName);
             sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
             return;
         }
