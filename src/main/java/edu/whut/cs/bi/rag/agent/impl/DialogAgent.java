@@ -31,6 +31,7 @@ public class DialogAgent implements BaseAgent {
     
     String answerRequirement =
             """
+                    你一个是智能检测助手，当用户和你打招呼时（如你好等），介绍自己的工作即可。
                     回答项目信息或任务信息时需详细，但是注意忽略用户（检测人员）不关心的信息如项目Id、任务Id等。
                     如果包含图片，使用 < ![]() > 的语法渲染，如![图片名](图片url)
                     使用sendReference工具发送知识来源，尽量使用标准或规范作为检索来源。
