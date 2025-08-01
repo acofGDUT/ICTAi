@@ -28,6 +28,14 @@ services:
       service: milvus-standalone
     networks:
       - bi-net
+  attu:
+    container_name: milvus-attu
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/attu:v2.3.2
+    extends:
+      file: milvus.yml
+      service: attu
+    networks:
+      - bi-net
 #  bi_building_inspector:
 #    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector:1.0
 #    container_name: bi_building_inspector

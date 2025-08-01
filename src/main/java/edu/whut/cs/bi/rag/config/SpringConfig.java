@@ -37,6 +37,7 @@ public class SpringConfig {
         return new MilvusServiceClient(ConnectParam.newBuilder()
                 .withAuthorization("minioadmin", "minioadmin")
                 .withHost("59.110.81.142")
+//                .withHost("localhost")
                 .build());
     }
 }
