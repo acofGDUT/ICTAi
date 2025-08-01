@@ -3,6 +3,7 @@ package edu.whut.cs.bi.rag.agent.utils;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +53,11 @@ public class SseEventUtil {
     
     public void knowledgeReference(SseEmitter emitter, String reference) {
         sendSseEvent(emitter, "reference", Map.of("reference", reference));
+    }
+    
+    
+    public void toolCall(SseEmitter emitter, String toolName) {
+        sendSseEvent(emitter, "toolCall", Map.of("toolName", toolName));
     }
     
 

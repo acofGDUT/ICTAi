@@ -38,9 +38,6 @@ public class AgentService {
             sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
             return;
         }
-        long startTime = System.currentTimeMillis();
         agent.run(prompt, emitter, chatId, userId);
-        long endTime = System.currentTimeMillis();
-        log.info("agent执行时间: {} ms", (endTime - startTime));
     }
 }
