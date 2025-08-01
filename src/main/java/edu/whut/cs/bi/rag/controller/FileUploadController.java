@@ -18,8 +18,11 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.reader.ExtractedTextFormatter;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
+import org.springframework.ai.reader.pdf.ParagraphPdfDocumentReader;
+import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -74,7 +77,14 @@ public class FileUploadController {
             // 解析文件内容，支持多种文件类型
             DocumentReader reader;
             if (file.getOriginalFilename().endsWith(".pdf")) {
-                reader = new PagePdfDocumentReader(new InputStreamResource(file.getInputStream()));
+
+                reader = new PagePdfDocumentReader(new InputStreamResource(file.getInputStream()), PdfDocumentReaderConfig.builder()
+                        .withPageTopMargin(0)
+                        .withPageExtractedTextFormatter(ExtractedTextFormatter.builder()
+                                .withNumberOfTopTextLinesToDelete(0)
+                                .build())
+                        .withPagesPerDocument(1)
+                        .build());
             } else if (file.getOriginalFilename().endsWith(".txt")) {
                 TextReader textReader = new TextReader(new InputStreamResource(file.getInputStream()));
                 textReader.getCustomMetadata().put("filename", file.getOriginalFilename());
@@ -87,7 +97,6 @@ public class FileUploadController {
             // 分割文档
             TokenTextSplitter splitter = new TokenTextSplitter();
             List<Document> splitDocuments = splitter.apply(documents);
-
             // 添加到向量存储（Milvus）
             vectorStore.add(splitDocuments); // 向量数据库存储逻辑
 
