@@ -15,7 +15,7 @@ public class SseEventUtil {
     /**
      * 发送SSE事件
      */
-    public void sendSseEvent(SseEmitter emitter, String eventName, Object data) {
+    private void sendSseEvent(SseEmitter emitter, String eventName, Object data) {
             try {
                 emitter.send(SseEmitter.event().name(eventName).data(Optional.ofNullable(data).orElse(Map.of())));
             } catch (IOException e) {

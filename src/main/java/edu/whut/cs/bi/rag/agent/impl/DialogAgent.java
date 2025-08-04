@@ -99,6 +99,7 @@ public class DialogAgent implements BaseAgent {
                 })
                 .doOnComplete(() -> {
                     sseEventUtil.callEnd(emitter);
+                    sseEventUtil.callEnd(emitter);
                     emitter.complete();
                 })
                 .doOnError(throwable -> {
