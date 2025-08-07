@@ -1,0 +1,8 @@
+services:
+  chroma:
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/chroma:1.0.8
+    container_name: chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_data:/chroma/data
