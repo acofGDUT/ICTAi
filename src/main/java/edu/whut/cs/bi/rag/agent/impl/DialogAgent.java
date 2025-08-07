@@ -14,7 +14,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Slf4j
@@ -60,14 +60,21 @@ public class DialogAgent implements BaseAgent {
                     拥有病害的Object的上一层结构可以在json中查看biObject下的parentObjectName字段,最上层的结构可以在json中查看biObject下的grandObjectName字段（一般为上部结构、下部结构、桥面系、附属设施）。
                     当用户提问某个部件（如空心板、铰缝等）有哪些病害时，请关注biObject下的name字段。
                     """;
-    final private String SYSTEM_PROMPT =
-            answerRequirement +
-                    toolDescription +
-                    toolRequirement +
-                    diseaseToolPrompt;
-    String datePrompt = "这是今天的日期" + LocalDate.now();
+    
+    String attachedMessage =
+            """
+                    ```附加信息
+                    今天的日期: {date}
+                    userId: {userId}
+                    ```
+                    """;
     
     public DialogAgent(ChatClient.Builder builder, VectorStore vectorStore, ChatMemory memory, BiQueryTools biQueryTools) {
+        String SYSTEM_PROMPT = answerRequirement +
+                toolDescription +
+                toolRequirement +
+                diseaseToolPrompt +
+                attachedMessage;
         chatClient = builder
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(memory).build(), new QuestionAnswerAdvisor(vectorStore))
                 .defaultSystem(SYSTEM_PROMPT)
@@ -88,8 +95,10 @@ public class DialogAgent implements BaseAgent {
         sseEventUtil.runAgent(emitter, "dialogAgent");
         chatClient
                 .prompt()
+                .system(a -> a.param("date", LocalDateTime.now()))
+                .system(a -> a.param("userId", userId))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
-                .user(prompt + datePrompt + "我的userID:" + userId)
+                .user(prompt)
                 .toolContext(Map.of("emitter", emitter))
                 .stream().content()
                 .doOnNext(content -> {
