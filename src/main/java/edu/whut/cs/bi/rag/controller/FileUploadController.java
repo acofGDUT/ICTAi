@@ -12,6 +12,7 @@ import com.tencent.tcvectordb.model.param.collectionView.ParsingProcessParam;
 import com.tencent.tcvectordb.model.param.collectionView.SplitterPreprocessParams;
 import com.tencent.tcvectordb.model.param.enums.ParsingTypeEnum;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
+import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -21,35 +22,25 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.reader.ExtractedTextFormatter;
 import org.springframework.ai.reader.TextReader;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
-import org.springframework.ai.reader.pdf.ParagraphPdfDocumentReader;
 import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableRow;
-import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -82,6 +73,7 @@ public class FileUploadController {
                         .withPageTopMargin(0)
                         .withPageExtractedTextFormatter(ExtractedTextFormatter.builder()
                                 .withNumberOfTopTextLinesToDelete(0)
+                                .withNumberOfBottomTextLinesToDelete(0)
                                 .build())
                         .withPagesPerDocument(1)
                         .build());
@@ -93,14 +85,22 @@ public class FileUploadController {
                 return "不支持的文件类型，仅支持 PDF 和 TXT";
             }
             List<Document> documents = reader.read();
+            
+            // 过滤掉所有不可见的字符
+            List<Document> cleanedDocuments = documents.stream()
+                    .map(doc -> {
+                        String cleanedContent = doc.getText().replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", " ");
+                        return new Document(doc.getId(), cleanedContent, doc.getMetadata());
+                    })
+                    .collect(Collectors.toList());
 
             // 分割文档
             TokenTextSplitter splitter = new TokenTextSplitter();
-            List<Document> splitDocuments = splitter.apply(documents);
-            // 添加到向量存储（Milvus）
-            vectorStore.add(splitDocuments); // 向量数据库存储逻辑
-
-            return "文件上传成功，已存储到 Milvus 向量库";
+            List<Document> splitDocuments = splitter.apply(cleanedDocuments);
+            // 添加到向量存储
+            vectorStore.add(splitDocuments);
+            
+            return "文件上传成功，已存储到向量库";
         } catch (IOException e) {
             return "文件读取失败：" + e.getMessage();
         } catch (Exception e) {
