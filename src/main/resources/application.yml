@@ -32,6 +32,7 @@ spring:
       embedding:
         options:
           model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
+
 #      vectorstore:
 #        milvus:
 #          client:
