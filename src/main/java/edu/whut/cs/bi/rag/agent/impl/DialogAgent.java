@@ -12,6 +12,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -21,8 +22,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class DialogAgent implements BaseAgent {
-    
 
+    @Value("${dialog-agent-model}")
+    private String dialogAgentModel;
     
     private final ChatClient chatClient;
     
@@ -79,7 +81,7 @@ public class DialogAgent implements BaseAgent {
         chatClient = builder
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(memory).build(), QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().similarityThreshold(0.8).topK(15).build()).build())
                 .defaultSystem(SYSTEM_PROMPT)
-                .defaultOptions(OpenAiChatOptions.builder().model("o4-mini-2025-04-16").build())
+                .defaultOptions(OpenAiChatOptions.builder().model(dialogAgentModel).build())
                 .defaultTools(biQueryTools)
                 .build();
     }

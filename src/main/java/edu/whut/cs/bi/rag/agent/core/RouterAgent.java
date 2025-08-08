@@ -6,6 +6,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -16,6 +17,9 @@ import java.util.Objects;
 @Component
 @Slf4j
 public class RouterAgent {
+
+    @Value("${router-agent-model}")
+    private String routerAgentModel;
     
     AgentRegistry agentRegistry;
     ChatClient chatClient;
@@ -30,7 +34,7 @@ public class RouterAgent {
                 getAgentInfo()
         );
         chatClient = builder
-                .defaultOptions(OpenAiChatOptions.builder().model("gpt-4o-mini").build())
+                .defaultOptions(OpenAiChatOptions.builder().model(routerAgentModel).build())
                 .defaultSystem(String.join("\n", strings))
                 .build();
     }
