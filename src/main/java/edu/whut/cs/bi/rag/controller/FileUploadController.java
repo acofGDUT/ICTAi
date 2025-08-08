@@ -12,6 +12,7 @@ import com.tencent.tcvectordb.model.param.collectionView.ParsingProcessParam;
 import com.tencent.tcvectordb.model.param.collectionView.SplitterPreprocessParams;
 import com.tencent.tcvectordb.model.param.enums.ParsingTypeEnum;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
@@ -32,10 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -45,6 +43,7 @@ import java.util.stream.Collectors;
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api-ai")
+@Slf4j
 public class FileUploadController {
     @Autowired
     private ChatModel chatModel;
@@ -86,17 +85,10 @@ public class FileUploadController {
             }
             List<Document> documents = reader.read();
             
-            // 过滤掉所有不可见的字符
-            List<Document> cleanedDocuments = documents.stream()
-                    .map(doc -> {
-                        String cleanedContent = doc.getText().replaceAll("[\\p{C}\\p{Zl}\\p{Zp}]", " ");
-                        return new Document(doc.getId(), cleanedContent, doc.getMetadata());
-                    })
-                    .collect(Collectors.toList());
 
             // 分割文档
             TokenTextSplitter splitter = new TokenTextSplitter();
-            List<Document> splitDocuments = splitter.apply(cleanedDocuments);
+            List<Document> splitDocuments = splitter.apply(documents);
             // 添加到向量存储
             vectorStore.add(splitDocuments);
             

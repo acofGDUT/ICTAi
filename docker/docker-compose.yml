@@ -14,41 +14,49 @@ services:
       service: minio
     networks:
       - bi-net
-  etcd:
-    container_name: milvus-etcd
-    extends:
-      file: milvus.yml
-      service: etcd
-    networks:
-      - bi-net
-  milvus-standalone:
-    container_name: milvus-standalone
-    extends:
-      file: milvus.yml
-      service: milvus-standalone
-    networks:
-      - bi-net
-  attu:
-    container_name: milvus-attu
-    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/attu:v2.3.2
-    extends:
-      file: milvus.yml
-      service: attu
-    networks:
-      - bi-net
-#  bi_building_inspector:
-#    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector:1.0
-#    container_name: bi_building_inspector
-#    ports:
-#      - "8090:80"
-#    restart: always
+#  etcd:
+#    container_name: milvus-etcd
+#    extends:
+#      file: milvus.yml
+#      service: etcd
 #    networks:
 #      - bi-net
-#    depends_on:
-#      - mysql
-#      - minio
-#      - etcd
-#      - milvus-standalone
+#  milvus-standalone:
+#    container_name: milvus-standalone
+#    extends:
+#      file: milvus.yml
+#      service: milvus-standalone
+#    networks:
+#      - bi-net
+#  attu:
+#    container_name: milvus-attu
+#    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/attu:v2.3.2
+#    extends:
+#      file: milvus.yml
+#      service: attu
+#    networks:
+#      - bi-net
+  chroma:
+    container_name: chroma
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/chroma:1.0.8
+    extends:
+      file: chroma.yml
+      service: chroma
+    networks:
+      - bi-net
+  bi_building_inspector:
+    image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector:1.0
+    container_name: bi_building_inspector
+    ports:
+      - "8090:80"
+    restart: always
+    networks:
+      - bi-net
+    depends_on:
+      - mysql
+      - minio
+      - etcd
+      - milvus-standalone
   bi_building_inspector_ai:
     image: crpi-gxv0234hwyx1jbhm.cn-beijing.personal.cr.aliyuncs.com/qxr777/building-inspector-ai:1.0
     container_name: bi_building_inspector_ai
