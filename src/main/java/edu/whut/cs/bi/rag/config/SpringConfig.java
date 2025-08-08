@@ -5,6 +5,7 @@ import org.springframework.ai.chroma.vectorstore.ChromaApi;
 import org.springframework.ai.chroma.vectorstore.ChromaVectorStore;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -13,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class SpringConfig {
+    @Value("${chroma-url}")
+    private String chromaUrl;
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
@@ -25,7 +28,7 @@ public class SpringConfig {
 
     @Bean
     public ChromaApi chromaApi(RestClient.Builder restClientBuilder, ObjectMapper objectMapper) {
-        String chromaUrl = "http://localhost:8000";
+//        String chromaUrl = "http://localhost:8000";
         ChromaApi chromaApi = new ChromaApi(chromaUrl, restClientBuilder,objectMapper);
         return chromaApi;
     }
