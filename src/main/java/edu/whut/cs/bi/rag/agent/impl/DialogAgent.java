@@ -10,6 +10,7 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -76,7 +77,7 @@ public class DialogAgent implements BaseAgent {
                 diseaseToolPrompt +
                 attachedMessage;
         chatClient = builder
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(memory).build(), new QuestionAnswerAdvisor(vectorStore))
+                .defaultAdvisors(MessageChatMemoryAdvisor.builder(memory).build(), QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().similarityThreshold(0.8).topK(15).build()).build())
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultOptions(OpenAiChatOptions.builder().model("o4-mini-2025-04-16").build())
                 .defaultTools(biQueryTools)
