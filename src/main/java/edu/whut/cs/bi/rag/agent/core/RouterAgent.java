@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +31,11 @@ public class RouterAgent {
         this.objectMapper = objectMapper;
         agentRegistry = registry;
         List<String> strings = List.of(
-                "请根据用户需求选择最合适的 agent 进行调用，只允许返回 agent 的 name 属性。只能返回一个 agent , 如果没有合适的则默认使用 dialogAgent",
-                getAgentInfo()
+                "请根据用户需求选择最合适的 agent 进行调用, 如果没有合适的则默认使用 dialogAgent",
+                getAgentInfo() +
+                        """
+                                返回示例: {"name": "dialogAgent"}
+                                """
         );
         chatClient = builder
                 .defaultOptions(OpenAiChatOptions.builder().model(routerAgentModel).build())
@@ -42,20 +46,23 @@ public class RouterAgent {
     
     public BaseAgent run(String prompt, SseEmitter emitter, String chatId, String userId) {
         log.info("开始路由请求，用户ID: {}, 对话ID: {}", userId, chatId);
-        sseEventUtil.runAgent(emitter, "RouterAgent");
-        
-        String agentName = chatClient.prompt()
-                .user(prompt)
-                .call().content();
-        BaseAgent agent = agentRegistry.getAgent(agentName);
-        if (agent == null) {
-            log.error("agent不存在: {}", agentName);
-            sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
-            throw new RuntimeException("agent不存在: " + agentName);
+        sseEventUtil.runAgent(emitter, "路由智能体");
+        try {
+            String agentName = objectMapper.readValue(chatClient.prompt()
+                    .user(prompt)
+                    .call().content(), HashMap.class).get("name").toString();
+            BaseAgent agent = agentRegistry.getAgent(agentName);
+            if (agent == null) {
+                log.error("agent不存在: {}", agentName);
+                sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
+                throw new RuntimeException("agent不存在: " + agentName);
+            }
+            log.info("路由成功，使用agent: {}", agentName);
+            sseEventUtil.agentEnd(emitter);
+            return agent;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        log.info("路由成功，使用agent: {}", agentName);
-        sseEventUtil.agentEnd(emitter);
-        return agent;
     }
     
     private String getAgentInfo() {

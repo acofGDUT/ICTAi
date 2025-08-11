@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -51,8 +50,8 @@ public class BiQueryTools {
         HttpEntity entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         String res = response.getBody();
-        log.info("查询的桥梁所有基本属性的json文本");
-        sseEventUtil.toolCall(emitter, "查询的桥梁所有基本属性 桥梁名称: %s".formatted(BuildingName));
+        log.info("查询的桥梁所有基本属性");
+        sseEventUtil.toolCall(emitter, "查询桥梁基本属性 (桥梁名称: %s)".formatted(BuildingName));
         return "查询的桥梁所有基本属性的 json文本:" + res;
     }
     
@@ -73,9 +72,9 @@ public class BiQueryTools {
         HttpEntity entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         String res = response.getBody();
-        log.info("查询的用户项目json文本");
-        sseEventUtil.toolCall(emitter, "查询的用户项目 userId: %s".formatted(UserId));
-        return "查询的用户项目json文本:" + res;
+        log.info("查询的用户项目");
+        sseEventUtil.toolCall(emitter, "查询用户项目 (用户ID: %s)".formatted(UserId));
+        return "查询的用户项目:" + res;
     }
     
     @Tool(description = "使用本工具前，请务必确保得到了projectId。通过拿到的projectId(项目Id)查询任务(task)信息，注意，如果用户参与了项目A，那么项目A中的所有任务该用户都需要参与。")
@@ -94,9 +93,9 @@ public class BiQueryTools {
         HttpEntity entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         String res = response.getBody();
-        log.info("查询的项目任务json文本");
-        sseEventUtil.toolCall(emitter, "查询项目任务 projectId: %s".formatted(ProjectId));
-        return "查询的项目的任务json文本:" + res;
+        log.info("查询的项目任务");
+        sseEventUtil.toolCall(emitter, "查询项目任务 (项目ID: %s)".formatted(ProjectId));
+        return "查询的项目的任务:" + res;
     }
     
     @Tool(description = "通过桥梁名称查询桥梁列表，列表中的桥梁对象存放了桥梁Id等信息。")
@@ -115,9 +114,9 @@ public class BiQueryTools {
         HttpEntity entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         String res = response.getBody();
-        log.info("查询的桥梁列表json文本");
-        sseEventUtil.toolCall(emitter, "查询的桥梁列表 桥梁名称: %s".formatted(BuildingName));
-        return "查询的桥梁列表json文本为:" + res;
+        log.info("查询的桥梁列表");
+        sseEventUtil.toolCall(emitter, "查询的桥梁列表 (桥梁名称: %s)".formatted(BuildingName));
+        return "查询的桥梁列表:" + res;
     }
     
     @Tool(description = "通过桥梁Id和病害年份查看该年桥梁的病害信息")
@@ -136,17 +135,23 @@ public class BiQueryTools {
         HttpEntity entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
         String res = response.getBody();
-        log.info("查询的桥梁在{}年的病害信息的json文本为", year);
-        sseEventUtil.toolCall(emitter, "查询桥梁在" + year + "年的病害信息 桥梁Id: %s".formatted(BuildingId));
-        return "查询的桥梁在" + year + "年的病害信息的json文本为:" + res;
+        log.info("查询的桥梁在{}年的病害信息", year);
+        sseEventUtil.toolCall(emitter, "查询桥梁的病害信息 (桥梁ID: %s, 查询年份: %s)".formatted(BuildingId, year));
+        return "查询的桥梁在" + year + "年的病害信息:" + res;
     }
     
     @Tool(description = "向前端发送知识来源")
-    public void sendReference(@ToolParam(description = "知识来源的列表(list)，使用tool获取的信息统一来源是检索系统，如果是文档，则为文档全称。例如：系统检索。必须少于20个字") List<String> references, ToolContext toolContext) {
+    public void sendReference(
+            @ToolParam(description = "知识来源必须是一个专有名称，不需要形容词。例如：系统检索 向量数据库等，必须小于20个字") String reference,
+            ToolContext toolContext
+    ) {
         SseEmitter emitter = getSseEmitter(toolContext);
         if (emitter == null) return;
-        log.info("发送知识来源:{}", references);
-        references.forEach(reference -> sseEventUtil.knowledgeReference(emitter, reference));
+        if (reference.length() > 20) {
+            reference = "系统检索";
+        }
+        log.info("发送知识来源:{}", reference);
+        sseEventUtil.knowledgeReference(emitter, reference);
     }
     
     private SseEmitter getSseEmitter(ToolContext toolContext) {
