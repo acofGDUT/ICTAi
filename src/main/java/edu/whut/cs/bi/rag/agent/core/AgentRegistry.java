@@ -31,7 +31,6 @@ public class AgentRegistry {
         // 获取所有实现BaseAgent接口的Bean
         Map<String, BaseAgent> agentBeans = applicationContext.getBeansOfType(BaseAgent.class);
         for (Map.Entry<String, BaseAgent> entry : agentBeans.entrySet()) {
-            String beanName = entry.getKey();
             BaseAgent agent = entry.getValue();
             registerAgent(agent);
         }
@@ -56,7 +55,7 @@ public class AgentRegistry {
      * 根据名称获取Agent
      */
     public BaseAgent getAgent(String agentName) {
-        return registeredAgents.get(agentName);
+        return registeredAgents.getOrDefault(agentName, null);
     }
 
 }

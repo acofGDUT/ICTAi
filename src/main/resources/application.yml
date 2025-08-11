@@ -66,5 +66,5 @@ bi-chatMemory-expired-time-seconds: 1800    #单位分钟
 
 dialog-agent-model: "gpt-5-nano"
 #dialog-agent-model: o4-mini-2025-04-16
-router-agent-model: gpt-4o-mini
+router-agent-model: "gpt-5-nano"
 #router-agent-model: o4-mini-2025-04-16

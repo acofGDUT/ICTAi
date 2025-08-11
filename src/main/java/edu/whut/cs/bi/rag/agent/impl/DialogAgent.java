@@ -96,7 +96,7 @@ public class DialogAgent implements BaseAgent {
     
     @Override
     public String run(String prompt, SseEmitter emitter, String chatId, String userId) {
-        sseEventUtil.runAgent(emitter, "dialogAgent");
+        sseEventUtil.runAgent(emitter, "DialogAgent");
         chatClient
                 .prompt()
                 .system(a -> a.param("date", LocalDateTime.now()))

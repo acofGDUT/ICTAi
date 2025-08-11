@@ -1,7 +1,6 @@
 package edu.whut.cs.bi.rag.service;
 
 
-import edu.whut.cs.bi.rag.agent.core.AgentRegistry;
 import edu.whut.cs.bi.rag.agent.core.BaseAgent;
 import edu.whut.cs.bi.rag.agent.core.RouterAgent;
 import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
@@ -21,28 +20,15 @@ public class AgentService {
     @Resource
     private RouterAgent routerAgent;
     
-    private AgentRegistry agentRegistry;
-    
-    public AgentService(AgentRegistry agentRegistry) {
-        this.agentRegistry = agentRegistry;
-    }
-    
     @Async
     public void chat(String prompt, SseEmitter emitter, String chatId, String userId) {
-        log.info("开始处理用户请求，用户ID: {}, 对话ID: {}", userId, chatId);
+        log.info("开始处理用户请求，用户ID: {}, 对话ID: {}, 用户消息: {}", userId, chatId, prompt);
         try {
             // 使用路由 agent 进行路由
-            String agentName = routerAgent.run(prompt, emitter, chatId, userId).getAgentName();
-            log.info("路由结果，选择的Agent: {}", agentName);
-            BaseAgent agent = agentRegistry.getAgent(agentName);
-            if (agent == null) {
-                log.info("请求的agent不存在: {}", agentName);
-                sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
-                return;
-            }
-            log.info("开始执行Agent: {}", agentName);
+            BaseAgent agent = routerAgent.run(prompt, emitter, chatId, userId);
+            log.info("开始执行Agent: {}", agent.getName());
             agent.run(prompt, emitter, chatId, userId);
-            log.info("Agent执行完成: {}", agentName);
+            log.info("Agent执行完成: {}", agent.getName());
         } catch (Exception e) {
             log.error("处理用户请求时发生异常，用户ID: {}, 对话ID: {}", userId, chatId, e);
             log.error("用户消息: {}", prompt);
