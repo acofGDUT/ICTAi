@@ -1,5 +1,7 @@
 package edu.whut.cs.bi.rag.agent.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.whut.cs.bi.rag.agent.model.AgentEnum;
 import edu.whut.cs.bi.rag.agent.utils.SseEventUtil;
 import jakarta.annotation.Resource;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,17 +20,17 @@ import java.util.Objects;
 @Component
 @Slf4j
 public class RouterAgent {
-
-    @Value("${router-agent-model}")
-    private String routerAgentModel;
+    
     
     AgentRegistry agentRegistry;
     ChatClient chatClient;
     
     @Resource
     SseEventUtil sseEventUtil;
+    private ObjectMapper objectMapper;
     
-    public RouterAgent(AgentRegistry registry, ChatClient.Builder builder) {
+    public RouterAgent(@Value("${router-agent-model}") String routerAgentModel, AgentRegistry registry, ChatClient.Builder builder, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         agentRegistry = registry;
         List<String> strings = List.of(
                 "请根据用户需求选择最合适的 agent 进行调用，只返回 agent 的名称，不要有任何其他文字",
@@ -57,9 +60,15 @@ public class RouterAgent {
         Map<String, BaseAgent> availableAgents = agentRegistry.getAllAgents();
         StringBuilder agentInfo = new StringBuilder();
         agentInfo.append("可用的Agent列表:\n");
+        HashMap<String, String> agentMap = new HashMap<>();
         for (Map.Entry<String, BaseAgent> entry : availableAgents.entrySet()) {
             BaseAgent agent = entry.getValue();
-            agentInfo.append(String.format("- %s: %s\n", agent.getName(), agent.getDescription()));
+            agentMap.put(agent.getName(), agent.getDescription());
+        }
+        try {
+            agentInfo.append(objectMapper.writeValueAsString(agentMap));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
         return agentInfo.toString();
     }

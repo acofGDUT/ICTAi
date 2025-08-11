@@ -142,7 +142,7 @@ public class BiQueryTools {
     }
     
     @Tool(description = "向前端发送知识来源")
-    public void sendReference(@ToolParam(description = "知识来源的列表(list)，使用tool获取的信息统一来源是检索系统，如果是文档，则为文档全称。例如：系统检索, xxx文档") List<String> references, ToolContext toolContext) {
+    public void sendReference(@ToolParam(description = "知识来源的列表(list)，使用tool获取的信息统一来源是检索系统，如果是文档，则为文档全称。例如：系统检索。必须少于20个字") List<String> references, ToolContext toolContext) {
         SseEmitter emitter = getSseEmitter(toolContext);
         if (emitter == null) return;
         log.info("发送知识来源:{}", references);

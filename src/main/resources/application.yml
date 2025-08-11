@@ -24,15 +24,15 @@ spring:
 #      base-url: "http://localhost:8000"
       chat:
         options:
-          model: "gpt-4o-mini"  # 使用OpenAI的GPT-4o-mini模型
+          #          model: "gpt-4o-mini"  # 使用OpenAI的GPT-4o-mini模型
 #          model: "gpt-4.1-mini"  # 可选项， 该模型 相比 4o-mini 贵4倍 ，长文本处理效果好很多。
 #          model: "o4-mini-2025-04-16"  # 可选项，长文本处理效果好很多。
+          model: "gpt-5-nano"
           temperature: 0.7
 #          model: "Qwen2.5-7B-Instruct"
       embedding:
         options:
           model: "text-embedding-ada-002"  # 使用OpenAI的嵌入模型
-
 #      vectorstore:
 #        milvus:
 #          client:
@@ -55,7 +55,8 @@ spring:
 #          distance-type: COSINE_DISTANCE
 #          dimensions: 1536
 #          max-document-batch-size: 10000 # Optional: Maximum number of documents per batch
-chroma-url: http://localhost:8000
+#chroma-url: http://localhost:8000
+chroma-url: http://59.110.81.142:8000
 bi-location: http://59.110.81.142:8090
 bi-tokenExpirationInSeconds: 1800
 bi-Username: admin_ai
@@ -63,7 +64,7 @@ bi-Password: 123456
 bi-chatMemory-expired-time-seconds: 1800    #单位分钟
 #bi-location: http://localhost:80
 
-dialog-agent-model: gpt-4o-mini
+dialog-agent-model: "gpt-5-nano"
 #dialog-agent-model: o4-mini-2025-04-16
 router-agent-model: gpt-4o-mini
 #router-agent-model: o4-mini-2025-04-16

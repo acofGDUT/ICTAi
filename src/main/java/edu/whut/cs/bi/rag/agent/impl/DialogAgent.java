@@ -22,9 +22,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class DialogAgent implements BaseAgent {
-
-    @Value("${dialog-agent-model}")
-    private String dialogAgentModel;
     
     private final ChatClient chatClient;
     
@@ -72,7 +69,11 @@ public class DialogAgent implements BaseAgent {
                     ```
                     """;
     
-    public DialogAgent(ChatClient.Builder builder, VectorStore vectorStore, ChatMemory memory, BiQueryTools biQueryTools) {
+    public DialogAgent(@Value("${dialog-agent-model}") String dialogAgentModel,
+                       ChatClient.Builder builder,
+                       VectorStore vectorStore,
+                       ChatMemory memory,
+                       BiQueryTools biQueryTools) {
         String SYSTEM_PROMPT = answerRequirement +
                 toolDescription +
                 toolRequirement +
@@ -110,7 +111,6 @@ public class DialogAgent implements BaseAgent {
                     }
                 })
                 .doOnComplete(() -> {
-                    sseEventUtil.callEnd(emitter);
                     sseEventUtil.callEnd(emitter);
                     emitter.complete();
                 })

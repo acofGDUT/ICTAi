@@ -20,7 +20,7 @@ public class AgentService {
     
     @Resource
     private RouterAgent routerAgent;
-
+    
     private AgentRegistry agentRegistry;
     
     public AgentService(AgentRegistry agentRegistry) {
@@ -45,13 +45,9 @@ public class AgentService {
             log.info("Agent执行完成: {}", agentName);
         } catch (Exception e) {
             log.error("处理用户请求时发生异常，用户ID: {}, 对话ID: {}", userId, chatId, e);
-            try {
-                sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
-            } catch (Exception emitterException) {
-                log.error("向客户端发送错误信息时发生异常，用户ID: {}, 对话ID: {}", userId, chatId, emitterException);
-            } finally {
-                emitter.complete();
-            }
+            log.error("用户消息: {}", prompt);
+            sseEventUtil.error(emitter, "服务器内部异常，请联系管理员");
+            emitter.complete();
         }
     }
 }
