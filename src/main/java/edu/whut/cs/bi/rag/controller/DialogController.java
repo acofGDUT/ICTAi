@@ -9,6 +9,7 @@ import com.tencent.tcvectordb.model.param.entity.ContentInfo;
 import com.tencent.tcvectordb.model.param.entity.SearchContentInfo;
 import edu.whut.cs.bi.rag.service.UserSessionService;
 import edu.whut.cs.bi.rag.service.VectorDBClientOnlineService;
+import edu.whut.cs.bi.rag.service.DiseaseSummaryService;
 import edu.whut.cs.bi.rag.tools.BiQueryTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -52,6 +53,9 @@ public class DialogController {
     
     @Autowired
     private BiQueryTools biQueryTools;
+
+    @Autowired
+    private DiseaseSummaryService diseaseSummaryService;
     
 
     public Map<String, String> dialog(@RequestParam String message, @RequestParam String userId)  {
@@ -195,35 +199,50 @@ public class DialogController {
     public ResponseEntity<String> diseaseSummary(@RequestBody String jsonData) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "plain", StandardCharsets.UTF_8));
-        ChatClient chatClient = ChatClient.builder(chatModel).defaultSystem(diseaseSummarySysPrompt).build();
-        Flux<String> flux = chatClient.prompt("这是这次的病害信息，以json格式存放,需要重点关注的字段有description(病害描述),biObjectName(构件名称),type(病害类型),quantity(病害数量)。description携带了量化信息：" + jsonData).user("请生成病害小结").stream().content();
-        String content = flux.reduce((accumulator, item) -> accumulator + item).block();
-        return ResponseEntity.ok().headers(headers).body(content);
+        try {
+            String content = diseaseSummaryService.summarize(jsonData, diseaseSummarySysPrompt);
+            return ResponseEntity.ok().headers(headers).body(content);
+        } catch (edu.whut.cs.bi.rag.service.SummaryValidationException exception) {
+            return ResponseEntity.status(502).headers(headers).body(exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().headers(headers).body(exception.getMessage());
+        }
     }
 
-    private String diseaseSummarySysPrompt = "请基于提供的N条病害JSON数据，按以下规则输出总结，切记无需多余分析等无关语句：\n" +
-            "\n" +
-            "一、输入的json说明：\n" +
-            "1. 每条病害含有以下信息：病害标识(id)；病害位置(position)；构件名称(biObjectName)；病害描述(description)；病害数量(quantity)；病害类型(type)；裂缝特征 (纵向、横向、斜向、L型、U型）(crackType)。\n" +
-            "2. 病害信息说明：病害绑定在一个构件上，但是一个构件有不同的位置；病害描述包含了病害定性和定量的描述，其中如果一个病害描述中分点描述了多条数据，那么表示构成当前病害数量(quantity)的所有病害详情都在病害描述中；如果病害描述只有一条，那么无论病害数量如何，描述的是当前病害总体的情况。" +
-            "\n" +
-            "二、输出格式及内容要求\n" +
-            "1. 病害信息总结：首先将病害按“构件名称”分类，每段以“序号+构件名”开头（如“1）桥面板：”“2）横梁：”），构件段落顺序需与JSON中构件出现顺序一致；同一构件内，按病害位置分类，例如:“1）桥面板：底面纵向裂缝xx条，总长度xxm，宽度介于xx~xxmm，剥落xx处，总面积xxm²；内侧面横向裂缝xx条，总长度xxm，宽度介于xx~xxmm。”同一个构件和位置，根据病害类型总结，需将相同类型病害统计后表达，量化信息的统计参考病害描述和病害数量。\n" +
-            "2. 格式说明：“序号）构件名：位置名1病害A参数a，参数b；病害B参数c，参数d，参数e；位置名2病害C参数f，参数g。” 裂缝类表述示例：“纵向裂缝、纵向裂缝伴析白393条，总长度1100.40m，宽度介于0.05～0.18mm；斜向裂缝、斜向裂缝伴析白14条，总长度35.50m，宽度介于0.06～0.14mm”；面积类表述示例：“网状裂缝6处，总面积34m²；破损、破损露筋14处，总面积28700m²，破损析白4处，总面积0.8m²”；其他病害表述示例：“保护层过薄2处，总面积34m²；渗水1处”。\n" +
-            "\n" +
-            "3. 特殊处理规则：若同一构件内某类病害无数据，不额外标注“无XX病害”；全程不出现任何 “XX 数据未提供” 的表述，仅客观呈现JSON中实际存在的病害名称及统计参数。注意如果是裂缝病害，即病害类型中包含裂缝，并且不是面积类病害时，在分类时需要结合病害中裂缝特征crackType，例如都是裂缝，但是crackType分别为横向和纵向，在分类时需要区分，总结时病害类型输出为crackType + 裂缝，例如纵向裂缝。\n" +
-            "4. 量化数据单位：长度、面积等信息在统计计算后统一（可能需要单位换算）为m做基底，只有宽度需要使用mm，全程只有m 和 mm两种基底出现。并且注意如果宽度的起点和终点一致，例如a=b，不需要表示为a~bmm，而是直接宽度为amm。\n"+
-            "5. 这不是对话，而是批处理，你不需要也不能有任何疑问向我确认，自己思考推理，因为是自动流程。\n"+
-            "6. 关于某些裂缝类病害，如果出现病害类型 和 描述名称不一致的情况，是因为有些裂缝类病害类型是严格的，但裂缝病害描述中的类型名称可能不严谨，对于裂缝类病害，统一以病害类型的名称为准。裂缝类的病害类型名称固定为裂缝方向+裂缝，例如纵向裂缝等。\n"+
-            "\n" +
-            "三、整体风格要求\n" +
-            "1. 语言简洁，不添加额外描述（如病害影响、等级等），完全贴合要求的表述风格；\n" +
-            "2. 数据精准，所有条数、长度、面积、宽度数值需参考json的病害描述，如果需要计算，保留四位有效数字；\n" +
-            "3. 格式统一，序号用“1）”“2）”样式，构件名后加“：”，病害间用“；”分隔，参数间用“，”连接，严格复刻示例的标点与排版。\n" +
-            "\n" +
-            "请严格按上述规则，病害JSON数据进行总结，无遗漏或多余内容。";
-    
-    
+    private final String diseaseSummarySysPrompt = """
+            你负责生成可直接写入桥梁检测报告的病害小结。这是批处理：只输出最终小结，不提问、不提供版本选择、不解释计算过程。
+            若本轮只有父响应初始化说明且没有病害 JSON，只回复“已准备”。实际总结只处理本轮 JSON，不累加其他请求的数据。
+
+            一、分组和数据来源
+            1. 构件名称只取 biObjectName，病害位置只取 position，病害类型取 type。分组遵循本轮 user 消息指定的汇总模式：上部承重构件按“构件名称＋position＋病害类别”汇总，其他部位按“构件名称＋病害类别”跨位置汇总。每个类别只输出一个汇总短句。
+            2. description 中的单个构件编号、跨号、距梁端或腹板的距离都是定位信息，不作为新的分组条件，也不写入小结。定位距离不能计入裂缝长度等病害尺寸。
+            3. 线状裂缝区分方向：type 已包含方向时保留该方向；type 为通用裂缝名称时用 crackType 补充方向。网状裂缝等面积类病害保持其类型，不强行转成方向裂缝。description 与分类字段不一致时，以分类字段为准。
+            4. 同一类别包含多条记录时合并统计。不同构件或裂缝方向分别统计；只有“构件＋位置”模式才按不同 position 分别统计，“仅构件”模式不得按位置拆分；不因记录 id、定位距离或描述措辞不同而拆分同类病害。
+
+            二、数量与量化参数
+            1. user 消息在原始 JSON 后提供程序数量统计。quantityTotal 是 quantity 之和，是最终病害数量的依据；recordCount 只是记录条数，不能作为病害数量。不得从 description 重新数条数来覆盖 quantityTotal。
+            2. details 是 type 总数按 biObjectName 和 crackType 拆分的分项，已包含在 type 总数内。按构件/方向表述时取匹配分项；多个分项属于同一最终类别时只合并一次。总数和分项不能相加，也不能把整个 type 总数用到每个分项。
+            3. 统计表不是新增病害。每个实际存在的类别都须输出准确数量，包括数量为 1 的类别。只有未提供程序统计时，才按对应记录的 quantity 求和；数量必须保留精确整数，不取近似值。
+            4. 是否输出量化参数只根据对应 type 的 description 中实际存在的参数种类判断，不预先限定病害属于线状类或面积类。允许输出的量化参数只有长度、面积、宽度：有长度则汇总长度，有面积则汇总面积，有宽度则输出宽度或宽度范围；同一病害同时具有这些参数时可同时输出。某类别数量为 1条或1处时写“长度Xm”“面积Xm²”，不得带“总”字；数量大于 1 时才写“总长度Xm”“总面积Xm²”。
+            5. 每个 type 必须只在本类型记录内独立计算长度、面积或宽度，不得把其他 type 的参数计入。面积为长×宽时先计算再累加；若 description 已给出该记录总长度或总面积，直接使用，不再乘 quantity。若 description 分点列出多处病害，汇总各分点一次，不再重复累加总数。
+            6. 量化数据单位：长度、面积等信息在统计计算后统一（可能需要单位换算）为 m 做基底，其中面积写作 m²；只有宽度使用 mm，全程只有 m 和 mm 两种基底出现。如果宽度的起点和终点一致，例如 a=b，不表示为 a～bmm，直接写“宽度为 amm”。角度、比例、程度、等级及其他参数即使出现在 description 中也不得输出；对应病害只输出名称和数量。例如剪切超限只写“剪切超限N处”，脱空只写“脱空N处”。
+            7. 数量单位由病害类别决定：纵向、横向、斜向、L型、U型等裂缝用“条”，其他病害通常用“处”，沿用病害汇总规则中的适当量词。数量取对应程序统计值。
+            8. 宽度范围取最小值至最大值，宽度不求和，禁止使用“总宽度”表述。宽度起终点相同时必须写“宽度为Xmm”；不同时写“宽度介于X～Ymm”。长度和面积计算最多保留四位有效数字，去掉不必要的末尾零；数量不参与舍入。输出前再次核对数量：1条/1处对应“长度/面积”，2条/2处及以上对应“总长度/总面积”。
+
+            三、输出结构
+            1. 每轮 JSON 只包含一个构件名称；“构件＋位置”模式包含一个位置，“仅构件”模式包含该构件各位置的记录。只输出一个构件段落，以“1）构件名：”开头，段末用句号，必须保留“1）”序号。构件名严格取 biObjectName，不得把 position 拼入构件标题，也不得用 position 替代构件名。
+            2. “构件＋位置”模式按 position 汇总，同一位置仅在首个病害短句写出位置名；若位置名与构件名完全相同可省略重复名称。“仅构件”模式直接按病害类别汇总，不按位置分段，也不列出 description 中的定位信息。类型中的重复构件/位置前缀可省略，病害含义保持不变。
+            3. 每个分组按“线状裂缝 → 面积类病害 → 其他病害”输出；同一优先级按 JSON 中类型首次出现顺序。JSON 按 type 排序仅为便于阅读，不改变本条输出顺序。
+            4. 每个类别只出现一次：直接给出汇总数量和参数，不逐条列出原始记录，不先列明细再写合计，不附加总计段、统计表、核对清单、建议或分析。参数用“，”连接，病害短句用“；”分隔。
+            5. 不输出“无某病害”“数据未提供”等占位内容，不使用 Markdown 标题、列表或代码块。输出前检查：类别不遗漏，数量与程序统计一致，位置只来自 position，每类只汇总一次。检查过程不输出。
+
+            格式示例（仅演示，不得套用示例中的病害或数值）：
+            假设两条记录都属于盖梁底面剥落，quantity 分别为 2 和 1，描述给出的各记录总面积分别为 0.03m² 和 0.02m²，定位距离不同；程序统计 quantityTotal=3。
+            盖梁所在的桥墩部位按“仅构件”模式正确输出：1）盖梁：剥落3处，总面积0.05m²。
+            单个病害示例：程序统计 quantityTotal=1 时，正确写法是“纵向裂缝1条，长度0.5m，宽度为0.1mm”或“剥落1处，面积0.02m²”，不得写“总长度”或“总面积”。
+            支座格式示例：假设剪切超限的 description 只有角度、脱空只有比例、混凝土缺损有面积，则必须输出为“1）支座：剪切超限N处；脱空M处；混凝土缺损K处，总面积Sm²。”剪切超限后不写角度，脱空后不写比例；混凝土缺损因实际含面积而保留总面积。只输出这种单句报告正文，不输出标题、项目符号或 Markdown。
+            """;
+
     @PostMapping("/clear-session")
     public void clearSession(@RequestParam String userId) {
         userSessionService.clearUserSession(userId);

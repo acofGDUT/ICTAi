@@ -1,0 +1,19 @@
+{
+  "sectionName": "上部承重构件",
+  "diseases": [
+    {
+      "biObjectName": "节段（变截面箱梁）",
+      "position": "箱内外腹板",
+      "type": "剥落",
+      "quantity": 1,
+      "description": "L-7-0#节段箱内外腹板剥落1处，距小桩号侧节段缝 5.00m，距底板 1.50m，S=0.35×0.20m²"
+    },
+    {
+      "biObjectName": "节段（变截面箱梁）",
+      "position": "箱内内腹板",
+      "type": "剥落",
+      "quantity": 1,
+      "description": "L-8-0#节段箱内内腹板剥落1处，距大桩号侧节段缝 3.85m，距底板 1.70m，S=0.25×0.23m²"
+    }
+  ]
+}

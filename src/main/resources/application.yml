@@ -68,3 +68,23 @@ dialog-agent-model: "gpt-5-nano"
 #dialog-agent-model: o4-mini-2025-04-16
 router-agent-model: "gpt-5-nano"
 #router-agent-model: o4-mini-2025-04-16
+
+# 病害小结使用 Responses API 的公共父响应，按部位分组独立分叉：上部承重构件按 biObjectName + position，其他仅按 biObjectName。
+disease-summary:
+  # 先按部位规则分组：单组记录数 > 40 才走 luna，恰好 40 条仍走 nano。
+  small-group-model: "gpt-5-nano"
+  large-group-model: "gpt-5.6-luna"
+  large-group-threshold: 40
+  # 大模型最多尝试 3 次（包含首次），全失败后回退小模型；重试间隔为此值的 1、2 倍。
+  large-model-retry-delay-ms: 2000
+  request-timeout-seconds: 180
+  # 所有报告共用最多 3 路分组请求，避免集中生成报告时并发失控。
+  parallelism: 3
+  # 每个模型和提示词组合独立创建公共父 response_id，进程内最多复用 24 小时。
+  parent-max-age-seconds: 86400
+  # 最终 key 自动追加 system prompt 指纹和模型，同一提示词的父请求与分组请求使用相同 key。
+  prompt-cache-key: "disease-summary-v1"
+  # nano 的保留策略；gpt-5.6 系列客户端使用 prompt_cache_options.ttl=30m。
+  prompt-cache-retention: "in_memory"
+  # 实测时配置目录：逐次保存实际 HTTP 请求 JSON 及结果（含父响应初始化和重试）；默认关闭。
+  trace-directory: ""
