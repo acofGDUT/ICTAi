@@ -17,6 +17,24 @@ spring:
       max-file-size: 200MB
       max-request-size: 200MB
   ai:
+    mcp:
+      server:
+        name: building-inspector-mcp
+        version: 0.1.0
+        type: SYNC
+        # 外部 Agent 通过 Streamable HTTP 连接 /mcp，每个请求都需携带 OAuth 访问令牌
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
+        instructions: |
+          本服务以当前登录用户的身份只读查询桥梁检测系统（BuildingInspector）的数据，权限与该用户在网页端一致。
+          调用顺序：
+          1. 用户提到桥名时，先用 search_bridges 拿到 bridgeId；结果有多座同名或分幅桥时，先让用户确认是哪一座，不要自行挑选。
+          2. 用户问“我的项目/任务”时，先用 list_my_projects，再用 list_project_tasks。
+          3. 需要档案、结构或病害时，用 bridgeId 调 get_bridge_profile、get_structure_tree、query_diseases。
+          4. 病害较多时，先用 query_diseases 的 minLevel 或 componentKeyword 缩小范围，并优先根据 summary 回答。
+          5. 用户要求切换账号或退出登录时调用 switch_account，并把返回的提示转告用户。
+          回答要求：只依据工具返回的数据作答，不要编造病害、标度或评定结论；数据为空时如实说明。
     openai:
       api-key: "sk-U9JPSP23TsGQd1ACm12mWMSzOWCy3zBbuyVE251lrzivthDm"
       base-url: "https://api.bianxie.ai"
@@ -57,7 +75,19 @@ spring:
 #          max-document-batch-size: 10000 # Optional: Maximum number of documents per batch
 #chroma-url: http://localhost:8000
 chroma-url: http://59.110.81.142:8000
-bi-location: http://59.110.81.142:8090
+bi-location: http://127.0.0.1:80
+#bi-location: http://59.110.81.142:8090
+# MCP OAuth：BuildingInspector 是授权服务器，本服务是资源服务器。
+# 正式部署时 public-base-url / issuer 改为对外 https 地址，client-secret 用环境变量提供并与 BI 的 oauth.mcp-server-client-secret 一致。
+bi-mcp:
+  public-base-url: ${BI_MCP_PUBLIC_BASE_URL:http://127.0.0.1:8081}
+  oauth:
+    issuer: ${BI_OAUTH_ISSUER:http://127.0.0.1}
+    client-id: bi-mcp-server
+    client-secret: ${BI_MCP_CLIENT_SECRET:dev-mcp-server-secret-change-me}
+    exchange-cache-ttl: 60s
+  auth:
+    allow-legacy-jwt: false
 bi-tokenExpirationInSeconds: 1800
 bi-Username: admin_ai
 bi-Password: 123456
