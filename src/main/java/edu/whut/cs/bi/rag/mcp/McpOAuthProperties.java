@@ -17,7 +17,8 @@ public class McpOAuthProperties {
     /** 客户端看到的 MCP 地址（不含 /sse），同时作为令牌绑定的 resource */
     private String publicBaseUrl;
 
-    private String scope = "bridge:read";
+    /** 本服务支持申请的 scope，空格分隔；bridge:write 允许补算桥梁评定等写操作。 */
+    private String scope = "bridge:read bridge:write";
 
     private OAuth oauth = new OAuth();
 

@@ -8,6 +8,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -57,6 +58,38 @@ public class BiApiClient {
             }
             throw new IllegalStateException("调用 BuildingInspector 失败：" + e.getStatusCode());
         }
+        return parseData(body);
+    }
+
+    /**
+     * 以当前用户身份向 BuildingInspector 发起写操作。失败时抛出带中文原因的异常。
+     */
+    public JsonNode postData(String path, Object body) {
+        String token = token();
+        log.info("MCP 调用 BI：user={}, path={} (POST)", McpTokenContext.get().loginName(), path);
+        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl + "/toolCallingApi" + path)
+                .encode()
+                .build()
+                .toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String response;
+        try {
+            response = restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(body, headers), String.class).getBody();
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new IllegalStateException("BuildingInspector 拒绝了当前登录凭证，请在 AI 客户端中重新授权");
+            }
+            if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                throw new IllegalStateException("BuildingInspector 拒绝了这个操作，当前用户没有对应权限");
+            }
+            throw new IllegalStateException("调用 BuildingInspector 失败：" + e.getStatusCode());
+        }
+        return parseData(response);
+    }
+
+    private JsonNode parseData(String body) {
         try {
             JsonNode result = objectMapper.readTree(body);
             if (result.path("code").asInt(-1) != 0) {

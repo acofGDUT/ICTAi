@@ -80,7 +80,7 @@ public class McpAuthFilter extends OncePerRequestFilter {
         } catch (IllegalStateException e) {
             throw new BiTokenExchangeClient.InvalidTokenException(e.getMessage());
         }
-        return new McpTokenContext.McpIdentity(token, null, "legacy-jwt", null, 0);
+        return new McpTokenContext.McpIdentity(token, null, "legacy-jwt", null, 0, null);
     }
 
     private String extractToken(HttpServletRequest request) {

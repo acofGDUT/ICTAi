@@ -56,8 +56,19 @@ public final class McpTokenContext {
      * @param loginName      登录名，用于审计日志
      * @param clientName     授权时的客户端名称
      * @param tokenExpiresAt MCP 访问令牌过期时间（秒级时间戳），旧版直传 JWT 时为 0
+     * @param scope          本次授权的 scope（空格分隔），旧版直传 JWT 时为 null（不限制）
      */
     public record McpIdentity(String biToken, String accessToken, String loginName, String clientName,
-                              long tokenExpiresAt) {
+                              long tokenExpiresAt, String scope) {
+
+        /**
+         * 是否拥有指定 scope。旧版直传 JWT（scope 为 null）直接代表 BI 用户，视为拥有全部权限。
+         */
+        public boolean hasScope(String required) {
+            if (scope == null || scope.isBlank()) {
+                return true;
+            }
+            return java.util.List.of(scope.trim().split("\\s+")).contains(required);
+        }
     }
 }

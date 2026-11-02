@@ -65,7 +65,8 @@ public class BiTokenExchangeClient {
                 accessToken,
                 body.path("login_name").asText(),
                 body.path("client_name").asText(null),
-                body.path("subject_expires_at").asLong());
+                body.path("subject_expires_at").asLong(),
+                body.path("scope").asText(null));
         long ttl = Math.min(properties.getOauth().getExchangeCacheTtl().toMillis(),
                 body.path("expires_in").asLong() * 1000 - EXPIRY_MARGIN_MILLIS);
         ttl = Math.min(ttl, identity.tokenExpiresAt() * 1000 - now);

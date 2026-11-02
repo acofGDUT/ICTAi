@@ -2,6 +2,7 @@ package edu.whut.cs.bi.rag.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
@@ -46,7 +47,12 @@ public class OAuthMetadataController {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("resource", properties.getPublicBaseUrl());
         body.putArray("authorization_servers").add(properties.getOauth().getIssuer());
-        body.putArray("scopes_supported").add(properties.getScope());
+        ArrayNode scopesSupported = body.putArray("scopes_supported");
+        for (String scope : properties.getScope().trim().split("\\s+")) {
+            if (!scope.isBlank()) {
+                scopesSupported.add(scope);
+            }
+        }
         body.putArray("bearer_methods_supported").add("header");
         body.put("resource_name", "BuildingInspector 桥梁检测 MCP");
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(AS_METADATA_CACHE)).body(body);

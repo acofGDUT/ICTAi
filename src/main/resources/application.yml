@@ -27,13 +27,16 @@ spring:
         streamable-http:
           mcp-endpoint: /mcp
         instructions: |
-          本服务以当前登录用户的身份只读查询桥梁检测系统（BuildingInspector）的数据，权限与该用户在网页端一致。
+          本服务以当前登录用户的身份访问桥梁检测系统（BuildingInspector），查询类工具只读；评定计算是写操作，需要授权包含 bridge:write，并由后端再次校验网页端权限。
           调用顺序：
           1. 用户提到桥名时，先用 search_bridges 拿到 bridgeId；结果有多座同名或分幅桥时，先让用户确认是哪一座，不要自行挑选。
-          2. 用户问“我的项目/任务”时，先用 list_my_projects，再用 list_project_tasks。
+          2. 用户问“我的项目/任务”时，先用 list_my_projects，再用 list_project_tasks。问今年或某个项目哪些桥已提交、哪些已评定、评定等级和得分时，先向用户询问项目名称，再用 list_project_progress 按部门业务查询。名称还没拿到时不要调用。返回 chooseProject 时让用户选定，然后带 projectId 重查。要某座桥的部位分数或病害明细时，用返回的 bridgeId 和 year 再调 get_bridge_evaluation 或 query_diseases。
+          2.1 用户要求把未评定的桥补评、或问项目是否评完时，先看 list_project_progress：summary.complete 为 true 时只汇报，不要计算；否则只把 submitted=true 且 evaluated=false 的桥列为候选，未提交的桥先说明还没上传检测数据、默认不计算。计算前必须复述桥名和 taskId 并请用户确认。确认后逐座调用 calculate_bridge_evaluation，或对用户确认过的范围调用 calculate_project_evaluations。计算后用返回的 overall 和 get_bridge_evaluation（带 year）写系统等级、得分和部位分数，再调 list_project_progress 刷新汇总。evaluated 仍为 false 时按 message 写原因，不要写成 0 分。
           3. 需要档案、结构或病害时，用 bridgeId 调 get_bridge_profile、get_structure_tree、query_diseases。
-          4. 病害较多时，先用 query_diseases 的 minLevel 或 componentKeyword 缩小范围，并优先根据 summary 回答。
-          5. 用户要求切换账号或退出登录时调用 switch_account，并把返回的提示转告用户。
+          4. 问评定等级、系统得分、部位得分或构件分数时，用 get_bridge_evaluation。这是评分数据的标准查询。档案上的技术状况等级、结构树上的权重、病害明细里的 deductPoints 都不是这次检测的评定得分。
+          5. 病害较多时，先用 query_diseases 的 minLevel 或 componentKeyword 缩小范围，并优先根据 summary 回答。
+          6. 用户要求切换账号或退出登录时调用 switch_account，并把返回的提示转告用户。
+          7. 用户选用提示模板「今年评定」时，按该提示的步骤和口径写单年统计。不要改成跨年对比，也不要改用档案上的技术状况等级。
           回答要求：只依据工具返回的数据作答，不要编造病害、标度或评定结论；数据为空时如实说明。
     openai:
       api-key: "sk-U9JPSP23TsGQd1ACm12mWMSzOWCy3zBbuyVE251lrzivthDm"
